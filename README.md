@@ -72,7 +72,7 @@ vp test              # run Vitest
 yarn bumpy add       # create a bump file for your PR
 ```
 
-The spec, including the resolution rules every implementation must match, the path to a community lexicon and the choices still open, is drafted in [`docs/spec.md`](./docs/spec.md). Design notes for app-specific customisation beyond the shared fields (decorations, name styles, widgets) live in [`docs/extensions.md`](./docs/extensions.md).
+The spec, including the resolution rules every implementation must match, the path to a community lexicon, the choices still open and how it answers earlier proposals, is drafted in [`docs/spec.md`](./docs/spec.md). Design notes for app-specific customisation beyond the shared fields (decorations, name styles, widgets) live in [`docs/extensions.md`](./docs/extensions.md).
 
 ## 📣 Acknowledgements
 

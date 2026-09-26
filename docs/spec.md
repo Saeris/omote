@@ -2,8 +2,9 @@
 
 > **Status**: draft for discussion with the first adopting apps. Sections 2–9
 > describe what the prototype does today. Section 11 lists the choices still
-> open, which the adopters should settle together before a first release. The key
-> words MUST, SHOULD and MAY are used as in RFC 2119.
+> open, which the adopters should settle together before a first release.
+> Section 12 sets out the earlier proposals this builds on. The key words MUST,
+> SHOULD and MAY are used as in RFC 2119.
 
 ## 1. The problem
 
@@ -27,6 +28,11 @@ nothing gives them a way to, is **where a value comes from when their own record
 doesn't have it.**
 
 Omote gives them that way, and a tool that shows the account holder the answer.
+
+This has been tried before. The Lexicon Community's shared base profile stalled
+on a protocol constraint, and Trezy's lexicon generics chose to solve reading
+alone. Section 12 covers what each found, and which of their open problems this
+design settles.
 
 ## 2. The idea, in TypeScript's terms
 
@@ -213,10 +219,16 @@ Other implementations MUST reach the same result for the same records.
   and a relaxed constraint are both backward compatible under Lexicon's evolution
   rules.
 - **An app edits only its own record.** It MAY also write the shared base, which
-  belongs to no app. It MUST NOT write other apps' records, Bluesky's included.
-  Editing across apps is the account holder's decision, made in a tool built for
-  it, such as omote.social.
-- **An app that edits profiles SHOULD offer two explicit choices:**
+  belongs to no app, when the person chooses to (below). It MUST NOT write other
+  apps' records, Bluesky's included. Editing across apps is the account holder's
+  decision, made in a tool built for it, such as omote.social.
+- **Writing the shared base is always the person's explicit choice.** An app MUST
+  NOT write the shared base unless the person chose, for that change, to make it
+  everywhere. Without that choice, an edit goes to the app's own record. So a bio
+  written for a game can never replace one written for work by accident. A tool
+  whose only job is managing profiles, such as omote.social, is that choice: it
+  has no "here".
+- **An app that edits profiles SHOULD offer both choices side by side:**
   - **"Change it here"** writes the app's own record;
   - **"Change it everywhere"** writes the shared base, and so reaches every app
     whose chain includes it.
@@ -237,7 +249,10 @@ Other implementations MUST reach the same result for the same records.
 **`social.omote.actor.profile`** is a record with key `literal:self`, holding:
 
 - the six shared fields, all `nullable`, with Bluesky's limits, except that
-  images take Discord's formats (PNG, JPEG, GIF, WebP and AVIF) up to 10 MB;
+  images take Discord's formats (PNG, JPEG, GIF, WebP and AVIF) up to 10 MB. The
+  text limits are Bluesky's so that anything set here fits every Bluesky-shaped
+  app without being cut short; a longer bio belongs in an app's own record for
+  now (§11.4);
 - `extends`;
 - an optional `createdAt`.
 
@@ -326,10 +341,31 @@ before a first release.
      standard.site's `site.standard.theme.basic` (background, foreground, accent,
      accent foreground) would share a schema the publishing ecosystem already
      uses, rather than invent one.
+   - **Time zone.** Raised in the Lexicon Community's base-profile discussion
+     (§12.1), and already in Smoke Signal's profile as `tz`. It passes the test
+     for a shared field, since it means the same thing in every app. Its name and
+     format (an IANA name such as `Europe/Paris` is the obvious choice) should be
+     agreed before any app ships one, since the names must match exactly.
+   - **A longer description.** The shared base keeps Bluesky's 256 graphemes, so
+     everything in it fits every Bluesky-shaped app without being cut short. That
+     leaves one objection from §12.1 standing: someone with a long bio sets it app
+     by app. Raising a limit later is backward compatible, because it relaxes a
+     constraint; lowering one is not. So the limit starts at Bluesky's, and the
+     adopters can raise it together once their apps shorten inherited text for
+     display (§4).
    - Adding a shared field is backward compatible: records without it are simply
      silent about it.
-5. **The image ceiling.** 10 MB matches Discord. Some self-hosted PDSes refuse
-   anything over 5 MB by default.
+5. **Images.**
+   - **The ceiling.** 10 MB matches Discord. Some self-hosted PDSes refuse
+     anything over 5 MB by default.
+   - **Metadata.** Discussion #9 asked for alt text, for focal points, and for a
+     way to handle banners that apps crop to different aspect ratios (§12.1).
+     `avatar` and `banner` must stay blobs to keep Bluesky's shape, so any
+     metadata goes beside them rather than inside them: `bannerAlt`, say, and an
+     aspect ratio shaped like `community.lexicon.app.defs#aspectRatio` (`width`
+     and `height`). The Lexicon Community already uses that shape, with required
+     alt text, for apps' own images. A focal point has no precedent yet; with
+     one, an app could choose its crop rather than guess.
 6. **App declarations, and how an editor knows an app adopted.** An editor that
    writes apps' records needs to know which records follow these rules, and it
    needs permission for each.
@@ -341,10 +377,27 @@ before a first release.
      `repo:` scopes its metadata lists by name: declaring `repo:*` does not
      cover a request for `repo:social.grain.actor.profile` (tested 2026-09-26).
      So an editor has to name each app's collection in advance.
-   - A record declaring the app would settle both: its profile collection, name
-     and icon, verified from the app's domain through `.well-known` as a
-     standard.site publication is. Editors could offer a list of apps, and the
-     ecosystem would have a list of adopters.
+   - **The declaration already exists.** `community.lexicon.app.profile`
+     (Lexicon Community, June 2026) is a record an app publishes about itself, at
+     `self` in its own repository. It holds the app's name, images (an icon
+     among them) and links, the collections it `produces` and `consumes`, and
+     `accountIndicators`: records whose presence shows that an account uses the
+     app.
+   - **An editor can get from a profile collection to its app's declaration**
+     without a registry:
+     1. lexicon resolution names the DID that publishes the collection's lexicon
+        (Grain's `_lexicon` DNS record does);
+     2. that DID's `community.lexicon.app.profile/self` names and pictures the
+        app.
+
+     The DNS record is the verification: only the domain's owner can publish
+     it.
+
+   - **What adopters would do** is publish that record, listing their profile
+     collection under `produces` and in `accountIndicators`. Editors could then
+     show each app by name and icon, the ecosystem would have a list of adopters,
+     and omote.social would know which collections to name in its client
+     metadata. Grain does not publish one yet.
 7. **Extensions.** App-specific data already has a home, in the app's own record.
    What stays open is whether some of it, such as Discord-style decorations,
    should be shared across apps. See [`extensions.md`](./extensions.md).
@@ -361,3 +414,90 @@ before a first release.
    let alone follow a chain for each. A batch `getProfiles`, backed by an index
    of the network's profile records, is likely needed; Standard Reader plays that
    role for standard.site. Is it part of the standard, or a service built on it?
+
+## 12. Prior art
+
+### 12.1 A shared base profile (Lexicon Community, discussion #9)
+
+[Discussion #9](https://github.com/lexicon-community/lexicon/discussions/9)
+(December 2024 – February 2025) proposed `community.lexicon.actor.profile`:
+
+- **one collection**, holding a generic record at record key `com.atproto`, and a
+  record per service beside it (`app.bsky`, `events.smokesignal`);
+- **shared fields** of `displayName`, `description`, `avatar` and `banner`, with
+  Bluesky's limits;
+- **inheritance by default:** service records would "inherit all object
+  properties from the generic profile record", and services without one would
+  use the generic record.
+
+It stalled on a point @yamarten raised: a collection has exactly one schema,
+and a `literal` record key admits one key, so Bluesky's and Smoke Signal's
+records could not have different fields in the same collection. Several
+objections to the shape were also left unanswered.
+
+| Unresolved in #9                                          | Raised by             | Here                                                                                                       | Status       |
+| --------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| One collection cannot hold several schemas                | @yamarten             | Each app keeps its own collection and schema; `extends` links collections (§5)                             | **Settled**  |
+| How inheritance is expressed                              | Left open             | Explicit and ordered, per record: a missing field inherits, `null` hides, and the fold is specified (§5.2) | **Settled**  |
+| Services forced into one shape ("very 'twitter-like'")    | @essential-randomness | Only field names and types are shared; each record sets its own limits and adds its own fields (§4)        | **Settled**  |
+| A 256-grapheme bio for everyone                           | @essential-randomness | An app may allow more in its own record; the shared base keeps 256 for now (§11.4)                         | **Deferred** |
+| Animated images                                           | @essential-randomness | GIF, WebP and AVIF on the shared base (§8)                                                                 | **Settled**  |
+| One banner for every aspect ratio, focal points, alt text | @essential-randomness | Metadata beside the blobs, reusing the Lexicon Community's aspect-ratio shape (§11.5)                      | **Open**     |
+| Image metadata as its own reusable lexicon                | @snarfed              | The same question (§11.5)                                                                                  | **Open**     |
+| Time zone                                                 | @essential-randomness | A shared-field candidate (§11.4)                                                                           | **Open**     |
+
+Our own first design, a `social.omote.profile` record per app keyed by the
+app's name, repeated #9's structural mistake: one collection, one schema, for
+every app. Moving the link into each app's own record removed it.
+
+### 12.2 Lexicon generics (Trezy, March 2026)
+
+[Lexicon generics](https://trezy.codes/blog/atproto-profile-lexicon-generics)
+leave each app's profile alone. Beside each profile lexicon, its author
+publishes a sidecar (`community.lexicon.generic.profile`, keyed by the target
+NSID) mapping the lexicon's own fields to common concepts: `avatar`,
+`displayName`, `description`, `pronouns`.
+
+Its case against a single base profile names three failure modes, and they
+shaped this design:
+
+| Failure mode                                                                                                                                           | Here                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Scope:** "does editing my bio on one app update it everywhere?"                                                                                      | Every record says what it builds on, and writing the shared base requires the person's explicit "everywhere" (§7)         |
+| **Leaving the app:** "if the base profile is read-only, now I have to leave the app I'm using to go edit my profile"                                   | Apps edit their own record, and may write the shared base when the person asks (§7)                                       |
+| **Staleness:** "a profile that exists for the sake of being a profile, with no app experience around it, will go stale. This is the Gravatar problem." | Inheritance is live, so an app that builds on a base never holds a stale copy of it. A base nobody edits still goes stale |
+
+Generics solve reading, and say so: the proposal is "a discovery mechanism and
+translation layer", and leaves writing and propagation aside. Omote is the other
+half. The two differ on one point: generics map fields by declaration, so Sifa's
+`about` could be read as a description, while Omote matches names exactly (§4).
+They can coexist: an editor could read apps that haven't adopted through their
+sidecars, and resolve apps that have through `extends`.
+
+### 12.3 standard.site
+
+[standard.site](https://standard.site) is not about profiles, but it is the
+nearest precedent for how a shared lexicon wins adoption:
+
+- implementers who compete with one another founded it together, in a namespace
+  none of them owns (§11.1);
+- it shares a small core and leaves each app's content in an open union, as §4
+  leaves each app's own fields to the app;
+- Bluesky rendering its records gave apps a reason to publish them.
+
+Its `site.standard.theme.basic` is the candidate shape for theme colours (§11.4).
+
+### 12.4 App declarations (`community.lexicon.app`, June 2026)
+
+The Lexicon Community's
+[`community.lexicon.app`](https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/app)
+lexicons let an app describe itself, including the collections it produces and
+the records that show an account uses it. §11.6 builds on them rather than
+defining a declaration of Omote's own.
+
+### 12.5 Discord
+
+Discord's per-server profiles are the experience this aims at: a nickname,
+avatar, banner, bio and colours per server, with anything unset falling back to
+the global profile. [`extensions.md`](./extensions.md) maps the rest of what
+Discord offers.
