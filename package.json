@@ -1,0 +1,33 @@
+{
+  "name": "@omote/omote.social",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Per-app profiles for ATProto: one identity, presented the way you choose in each app.",
+  "license": "MIT",
+  "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "ci": "vp check && vp test",
+    "check": "vp check",
+    "format": "vp check --fix",
+    "test": "vp test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~5.9.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "resolutions": {
+    "vite": "8.3.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "yarn@4.17.0"
+}

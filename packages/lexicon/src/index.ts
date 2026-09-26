@@ -1,0 +1,114 @@
+/**
+ * The omote lexicons, as Valibot schemas.
+ *
+ * The JSON in `lexicons/` is what the network reads; these are what our code parses with. `lexicon-parity.test.ts` holds the two to the same limits, so neither can drift.
+ */
+
+import * as v from "valibot";
+
+export const NSID_PROFILE = "social.omote.profile";
+export const NSID_GET_PROFILE = "social.omote.getProfile";
+/** The base profile every override falls back to. */
+export const NSID_BSKY_PROFILE = "app.bsky.actor.profile";
+
+/** The profile fields an override can set or hide, in display order. */
+export const FIELDS = [
+  "displayName",
+  "description",
+  "pronouns",
+  "website",
+  "avatar",
+  "banner",
+] as const;
+
+export type Field = (typeof FIELDS)[number];
+
+/**
+ * A context: the NSID authority of an app, e.g. `social.taproom`.
+ *
+ * It doubles as the record key, so it must also be a valid rkey. A reversed domain name is both, and it names the app by the same authority its own lexicons live under, which the app already owns.
+ */
+export const contextSchema = v.pipe(
+  v.string(),
+  v.maxLength(253),
+  v.regex(
+    /^[a-z][a-z0-9-]{0,62}(\.[a-z0-9][a-z0-9-]{0,62})+$/u,
+    "A context is an app's reversed domain, e.g. social.taproom",
+  ),
+);
+
+export type Context = v.InferOutput<typeof contextSchema>;
+
+/** A blob reference as it appears in a record. */
+export const blobSchema = v.object({
+  $type: v.literal("blob"),
+  ref: v.object({ $link: v.string() }),
+  mimeType: v.string(),
+  size: v.number(),
+});
+
+export type Blob = v.InferOutput<typeof blobSchema>;
+
+const IMAGE_TYPES = ["image/png", "image/jpeg"];
+/** 1 MB, the same ceiling as a Bluesky avatar. */
+export const MAX_IMAGE_BYTES = 1_000_000;
+
+const imageSchema = v.pipe(
+  blobSchema,
+  v.check((blob) => IMAGE_TYPES.includes(blob.mimeType), "Images must be PNG or JPEG"),
+  v.check((blob) => blob.size <= MAX_IMAGE_BYTES, "Images must be 1 MB or smaller"),
+);
+
+const text = (graphemes: number, length: number) =>
+  v.pipe(v.string(), v.maxGraphemes(graphemes), v.maxLength(length));
+
+/** `social.omote.profile`: how the account appears in one context. */
+export const profileOverrideSchema = v.object({
+  displayName: v.optional(text(64, 640)),
+  description: v.optional(text(256, 2560)),
+  pronouns: v.optional(text(20, 200)),
+  website: v.optional(v.pipe(v.string(), v.url())),
+  avatar: v.optional(imageSchema),
+  banner: v.optional(imageSchema),
+  // Lexicon `knownValues` are open, so unknown entries are kept rather than rejected.
+  hide: v.optional(v.pipe(v.array(v.string()), v.maxLength(6))),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+});
+
+export type ProfileOverride = v.InferOutput<typeof profileOverrideSchema>;
+
+/**
+ * The parts of `app.bsky.actor.profile` a base contributes.
+ *
+ * Loose on purpose: this is someone else's record, so anything we do not use is ignored rather than validated, and a field that fails its check is dropped rather than failing the whole profile.
+ */
+/** A field kept if valid and dropped if not, instead of failing the whole record. */
+const lenient = <T extends v.GenericSchema>(schema: T) => v.fallback(v.optional(schema), undefined);
+
+export const baseProfileSchema = v.object({
+  displayName: lenient(v.string()),
+  description: lenient(v.string()),
+  pronouns: lenient(v.string()),
+  website: lenient(v.string()),
+  avatar: lenient(blobSchema),
+  banner: lenient(blobSchema),
+});
+
+export type BaseProfile = v.InferOutput<typeof baseProfileSchema>;
+
+export type Source = "override" | "base" | "hidden";
+
+/** `social.omote.getProfile#profileView`. */
+export interface ProfileView {
+  readonly did: string;
+  readonly handle: string;
+  readonly context: string;
+  readonly displayName?: string;
+  readonly description?: string;
+  readonly pronouns?: string;
+  readonly website?: string;
+  /** Served by the account's own PDS. */
+  readonly avatar?: string;
+  readonly banner?: string;
+  readonly sources: Partial<Record<Field, Source>>;
+}

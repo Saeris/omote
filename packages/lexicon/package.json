@@ -1,0 +1,21 @@
+{
+  "name": "@omote/lexicon",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The social.omote lexicons, and their Valibot schemas.",
+  "license": "MIT",
+  "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
+  "files": [
+    "src",
+    "lexicons"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "valibot": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

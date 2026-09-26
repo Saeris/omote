@@ -1,0 +1,28 @@
+{
+  "name": "@omote/profiles",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Resolve how an ATProto account appears in one app: a per-app override over the base profile. Works in browsers, Node and Workers.",
+  "license": "MIT",
+  "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@atcute/atproto": "catalog:",
+    "@atcute/client": "catalog:",
+    "@atcute/identity-resolver": "catalog:",
+    "@atcute/lexicons": "catalog:",
+    "@omote/lexicon": "workspace:*",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "msw": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
