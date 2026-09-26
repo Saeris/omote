@@ -69,7 +69,8 @@ jobs:
     environment: publish
     permissions:
       contents: write
-      # npm trusted publishing (OIDC) and provenance.
+      # npm trusted publishing (OIDC) and provenance. Each package trusts this
+      # repository's release.yml; fledgling claimed the names and set that up.
       id-token: write
     steps:
       - uses: actions/checkout@v6
@@ -91,9 +92,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BUMPY_GH_TOKEN: ${{ secrets.BUMPY_GH_TOKEN }}
-          # Only for the very first release, before trusted publishing can be
-          # configured on npm. Delete the secret once it is.
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Yarn 4 corrupts the tarball path Bumpy reads from stdout when colours
           # are on; NO_COLOR alone is not enough for Yarn 4.
           NO_COLOR: "1"
