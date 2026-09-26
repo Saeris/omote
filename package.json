@@ -18,6 +18,12 @@
     "format": "vp check --fix",
     "test": "vp test"
   },
+  "dependencies": {
+    "@atcute/identity": "catalog:",
+    "@atcute/identity-resolver": "catalog:",
+    "@atcute/lexicon-doc": "catalog:",
+    "@atcute/lexicon-resolver": "catalog:"
+  },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@varlock/bumpy": "^1.18.1",

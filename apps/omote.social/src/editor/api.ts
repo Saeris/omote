@@ -1,14 +1,9 @@
 import type { Did } from "@atcute/lexicons";
-import {
-  IMAGE_TYPES,
-  MAX_IMAGE_BYTES,
-  NSID_BASE_PROFILE,
-  blobSchema,
-  type Blob,
-} from "@omote-social/lexicon";
+import { NSID_BASE_PROFILE, blobSchema, type Blob } from "@omote-social/lexicon";
 import * as v from "valibot";
 import type { Session } from "../auth";
 import { isProfileCollection } from "./collections";
+import { accepts, type FieldRule } from "./shape";
 
 /**
  * The editor's reads and writes, all against the signed-in account's own PDS.
@@ -46,14 +41,16 @@ export const listProfiles = async (session: Session): Promise<Profiles> => {
   return new Map(entries.filter((entry) => entry !== undefined));
 };
 
-export const saveBase = async (
+/** Write one profile record, at its `self` key. The record is complete: build it from the one read (see form-model.ts), so nothing another app wrote is lost. */
+export const saveProfile = async (
   session: Session,
+  collection: string,
   record: Record<string, unknown>,
 ): Promise<void> => {
   const response = await session.rpc.post("com.atproto.repo.putRecord", {
     input: {
       repo: session.did,
-      collection: NSID_BASE_PROFILE,
+      collection: collection as never,
       rkey: "self",
       record: record as never,
     },
@@ -61,6 +58,7 @@ export const saveBase = async (
   if (!response.ok) throw failure("Could not save", response.data);
 };
 
+/** Only the shared base is ever deleted here: removing an app's own record is that app's business. */
 export const deleteBase = async (session: Session): Promise<void> => {
   const response = await session.rpc.post("com.atproto.repo.deleteRecord", {
     input: { repo: session.did, collection: NSID_BASE_PROFILE, rkey: "self" },
@@ -68,15 +66,30 @@ export const deleteBase = async (session: Session): Promise<void> => {
   if (!response.ok) throw failure("Could not delete", response.data);
 };
 
+const FORMAT_NAME: Record<string, string> = {
+  "image/png": "PNG",
+  "image/jpeg": "JPEG",
+  "image/gif": "GIF",
+  "image/webp": "WebP",
+  "image/avif": "AVIF",
+};
+
+/** An image rule in words: "PNG or JPEG, up to 1 MB". */
+export const describeImageRule = (rule: FieldRule): string => {
+  const formats = rule.accept?.some((type) => type.endsWith("/*"))
+    ? undefined
+    : rule.accept?.map((type) => FORMAT_NAME[type] ?? type);
+  const list = formats && new Intl.ListFormat("en", { type: "disjunction" }).format(formats);
+  const size = rule.maxSize && `up to ${rule.maxSize / 1_000_000} MB`;
+  return [list, size].filter(Boolean).join(", ") || "any image";
+};
+
 /**
- * Upload an image to the account's PDS. Checked here first, so a too-large file is refused with a reason rather than a PDS error.
+ * Upload an image to the account's PDS, for one record. Checked against that record's own lexicon first, so an image the app would refuse is refused here, with a reason.
  */
-export const uploadImage = async (session: Session, file: File): Promise<Blob> => {
-  if (!(IMAGE_TYPES as readonly string[]).includes(file.type)) {
-    throw new Error("Images must be PNG, JPEG, GIF, WebP or AVIF.");
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Images must be 10 MB or smaller.");
+export const uploadImage = async (session: Session, file: File, rule: FieldRule): Promise<Blob> => {
+  if (!accepts(rule, file.type) || (rule.maxSize !== undefined && file.size > rule.maxSize)) {
+    throw new Error(`This app takes ${describeImageRule(rule)}.`);
   }
 
   const response = await session.rpc.post("com.atproto.repo.uploadBlob", {
@@ -84,7 +97,7 @@ export const uploadImage = async (session: Session, file: File): Promise<Blob> =
     headers: { "content-type": file.type },
   });
   if (!response.ok && response.status === 413) {
-    // Within our ceiling but over the person's own server's, e.g. a self-hosted PDS at its 5 MB default.
+    // Within the app's limit but over the person's own server's, e.g. a self-hosted PDS at its 5 MB default.
     // Keyed on the status: the reference PDS names it PayloadTooLarge, and other servers may not.
     throw new Error("Your account's server won't accept an image this large. Try a smaller one.");
   }

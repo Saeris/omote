@@ -1,15 +1,26 @@
 ---
-import { Editor } from "../editor/Editor";
 import Base from "../layouts/Base.astro";
+import { EDITOR_PATH } from "../paths";
 ---
 
+<!-- A placeholder until the marketing page is built. -->
 <Base title="omote: how you appear in each app">
-  <header class="flex flex-col gap-3">
+  <header class="flex flex-col gap-4">
     <h1 class="text-3xl font-semibold tracking-tight">omote</h1>
     <p class="max-w-2xl text-neutral-700">
       Your ATProto account is one identity, everywhere. How you present it doesn't have to be. See
       where each app's profile of you comes from, and keep a shared profile that apps can build on.
     </p>
+    <div class="flex flex-wrap gap-3">
+      <a href={EDITOR_PATH} class="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white">
+        Open the editor
+      </a>
+      <a
+        href="https://github.com/Saeris/omote/blob/main/docs/spec.md"
+        class="rounded-md border border-neutral-300 px-4 py-2 font-medium"
+      >
+        Read the spec
+      </a>
+    </div>
   </header>
-  <Editor client:only="react" />
 </Base>

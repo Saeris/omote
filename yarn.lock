@@ -203,6 +203,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@atcute/car@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@atcute/car@npm:6.0.2"
+  dependencies:
+    "@atcute/cbor": "npm:^2.3.5"
+    "@atcute/cid": "npm:^2.4.2"
+    "@atcute/uint8array": "npm:^1.1.3"
+    "@atcute/varint": "npm:^2.0.1"
+  peerDependencies:
+    "@atcute/cbor": ^2.0.0
+    "@atcute/cid": ^2.0.0
+  checksum: 10/e054f43a9235990f84e6cdcc2bb813a8ac599eecb64cdf4678eb5d69a6ebbcb22d148509afe630cf43f3aa831c857e720fc726d4ecfc898eb1f2d1ddf51ff348
+  languageName: node
+  linkType: hard
+
+"@atcute/cbor@npm:^2.3.5, @atcute/cbor@npm:^2.3.7":
+  version: 2.3.7
+  resolution: "@atcute/cbor@npm:2.3.7"
+  dependencies:
+    "@atcute/cid": "npm:^2.4.2"
+    "@atcute/multibase": "npm:^1.2.5"
+    "@atcute/uint8array": "npm:^1.1.5"
+  peerDependencies:
+    "@atcute/cid": ^2.0.0
+  checksum: 10/0d13b7ca21e9649c6bc7ad362e38a0eba3861f0b4ae66fc4b1b4d3c5b703a2c0fec50671e3637979c289cdf159c8c1f2bc433325206298be67da4c95e979bb9b
+  languageName: node
+  linkType: hard
+
+"@atcute/cid@npm:^2.4.2":
+  version: 2.4.2
+  resolution: "@atcute/cid@npm:2.4.2"
+  dependencies:
+    "@atcute/multibase": "npm:^1.2.4"
+    "@atcute/uint8array": "npm:^1.1.3"
+  checksum: 10/6b6514d852abd929fd9dcb0bda9f540f4e82c8c4d7b301d03569abeecdf372c942efbc11f08768df1452256dd80399609c8e92884e284d12bac856bb0390f868
+  languageName: node
+  linkType: hard
+
 "@atcute/client@npm:^5.1.2":
   version: 5.1.2
   resolution: "@atcute/client@npm:5.1.2"
@@ -212,6 +250,17 @@ __metadata:
   peerDependencies:
     "@atcute/lexicons": ^2.0.0
   checksum: 10/096f7ffa13e4a41ecedf8594029b000e839432423bd5cd748f7ee39fbd201b164f55115cebb451eef9cb6e1e3ec7f10ae711e278c323265cd09bd4439884e6a7
+  languageName: node
+  linkType: hard
+
+"@atcute/crypto@npm:^2.4.2":
+  version: 2.4.4
+  resolution: "@atcute/crypto@npm:2.4.4"
+  dependencies:
+    "@atcute/multibase": "npm:^1.2.5"
+    "@atcute/uint8array": "npm:^1.1.5"
+    "@noble/secp256k1": "npm:^3.1.0"
+  checksum: 10/fb7069c21f1015f0a6e4b73d698cb110719657814dac3ed22f7f4aac4395f9efedcdfc1641a08c17fda9a60bbb298e92c8a2590c4d3682c52f19ef05bfb58a5f
   languageName: node
   linkType: hard
 
@@ -241,6 +290,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@atcute/lexicon-doc@npm:^3.0.1":
+  version: 3.1.0
+  resolution: "@atcute/lexicon-doc@npm:3.1.0"
+  dependencies:
+    "@atcute/identity": "npm:^2.0.2"
+    "@atcute/lexicons": "npm:^2.1.0"
+    "@atcute/uint8array": "npm:^1.1.5"
+    "@atcute/util-text": "npm:^1.3.4"
+    valibot: "npm:^1.4.2"
+  peerDependencies:
+    "@atcute/lexicons": ^2.0.0
+  checksum: 10/da03ed947d1e22f5260e87fc65e0a71836221ca6e50c4b6b629062e2394a44eeafa76764494fc08e6ebdfcbca7d81fee9103e59e09331ab9069e479c7ccc669c
+  languageName: node
+  linkType: hard
+
+"@atcute/lexicon-resolver@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@atcute/lexicon-resolver@npm:1.0.1"
+  dependencies:
+    "@atcute/crypto": "npm:^2.4.2"
+    "@atcute/lexicon-doc": "npm:^3.0.1"
+    "@atcute/lexicons": "npm:^2.0.2"
+    "@atcute/repo": "npm:^1.0.2"
+    "@atcute/util-fetch": "npm:^2.0.1"
+    valibot: "npm:^1.4.1"
+  peerDependencies:
+    "@atcute/identity": ^2.0.0
+    "@atcute/identity-resolver": ^2.0.0
+    "@atcute/lexicon-doc": ^3.0.0
+    "@atcute/lexicons": ^2.0.0
+  checksum: 10/b835421ace3bca34e5789f09291740f9b4a58ef13b1830022b38d5b418708683b4fc78729510955369daf3f313d929dd693b4b341c75090537ec4c729ab4c575
+  languageName: node
+  linkType: hard
+
 "@atcute/lexicons@npm:^2.0.2, @atcute/lexicons@npm:^2.0.3, @atcute/lexicons@npm:^2.1.0, @atcute/lexicons@npm:^2.1.1":
   version: 2.1.1
   resolution: "@atcute/lexicons@npm:2.1.1"
@@ -254,7 +337,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atcute/multibase@npm:^1.2.4":
+"@atcute/mst@npm:^1.0.2":
+  version: 1.1.0
+  resolution: "@atcute/mst@npm:1.1.0"
+  dependencies:
+    "@atcute/cbor": "npm:^2.3.7"
+    "@atcute/cid": "npm:^2.4.2"
+    "@atcute/uint8array": "npm:^1.1.5"
+  peerDependencies:
+    "@atcute/cbor": ^2.0.0
+    "@atcute/cid": ^2.0.0
+  checksum: 10/8973de6a6436ca1716691d9cded0b77c5d47ba7cef11202a034cc3ba4a41e563de5455f6079b9af6fe5d8a287186cee650f0d359b69c09b75e1c96f158bf2979
+  languageName: node
+  linkType: hard
+
+"@atcute/multibase@npm:^1.2.4, @atcute/multibase@npm:^1.2.5":
   version: 1.2.5
   resolution: "@atcute/multibase@npm:1.2.5"
   dependencies:
@@ -313,6 +410,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@atcute/repo@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@atcute/repo@npm:1.0.2"
+  dependencies:
+    "@atcute/car": "npm:^6.0.2"
+    "@atcute/cbor": "npm:^2.3.5"
+    "@atcute/cid": "npm:^2.4.2"
+    "@atcute/crypto": "npm:^2.4.2"
+    "@atcute/lexicons": "npm:^2.0.2"
+    "@atcute/mst": "npm:^1.0.2"
+    "@atcute/uint8array": "npm:^1.1.3"
+  peerDependencies:
+    "@atcute/cbor": ^2.0.0
+    "@atcute/cid": ^2.0.0
+    "@atcute/lexicons": ^2.0.0
+  checksum: 10/ea56f43984c9918dfad221d269c60b48b82546318d482ef1bef9bb3d6d2644de56dec983f33b94e2e023d12e2a5b4375b6e4fd737e68001a34a1527bc610389f
+  languageName: node
+  linkType: hard
+
 "@atcute/uint8array@npm:^1.1.3, @atcute/uint8array@npm:^1.1.5":
   version: 1.1.5
   resolution: "@atcute/uint8array@npm:1.1.5"
@@ -320,7 +436,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atcute/util-fetch@npm:^2.0.2":
+"@atcute/util-fetch@npm:^2.0.1, @atcute/util-fetch@npm:^2.0.2":
   version: 2.0.2
   resolution: "@atcute/util-fetch@npm:2.0.2"
   dependencies:
@@ -335,6 +451,13 @@ __metadata:
   dependencies:
     unicode-segmenter: "npm:^0.17.0"
   checksum: 10/c57751ebba7fd1c95aae461ea29dd65f55ac3cf3198b307a7305f75712b2bfe9b7d42ad3fc8f2f5a258a14df74ea743097da9756b8ed6f77729b93da18e789e9
+  languageName: node
+  linkType: hard
+
+"@atcute/varint@npm:^2.0.1":
+  version: 2.0.2
+  resolution: "@atcute/varint@npm:2.0.2"
+  checksum: 10/c7c313bb666bfb5f66b2429e9a4fb6f722b308de73cbbc778181c111e80efe55eee572de13589d349f78c2cc310abc75427ecf0abb44bb1275d51d26558cd3c5
   languageName: node
   linkType: hard
 
@@ -1644,6 +1767,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/secp256k1@npm:^3.1.0":
+  version: 3.2.0
+  resolution: "@noble/secp256k1@npm:3.2.0"
+  checksum: 10/f9bbce1f1c0287aa42fb4b01722d575b843ea0cbc01f077826c2d070c6ebe445b153884dc2c412a323facd95c2683a51edaf63a29f02e8637d8da37713844503
+  languageName: node
+  linkType: hard
+
 "@omote-social/lexicon@workspace:*, @omote-social/lexicon@workspace:^, @omote-social/lexicon@workspace:packages/lexicon":
   version: 0.0.0-use.local
   resolution: "@omote-social/lexicon@workspace:packages/lexicon"
@@ -1657,6 +1787,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@omote-social/omote.social@workspace:."
   dependencies:
+    "@atcute/identity": "catalog:"
+    "@atcute/identity-resolver": "catalog:"
+    "@atcute/lexicon-doc": "catalog:"
+    "@atcute/lexicon-resolver": "catalog:"
     "@types/node": "npm:^24.0.0"
     "@varlock/bumpy": "npm:^1.18.1"
     typescript: "npm:~5.9.2"

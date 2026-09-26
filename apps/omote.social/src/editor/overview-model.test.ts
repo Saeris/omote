@@ -55,32 +55,26 @@ describe("the overview", () => {
     ["dev.npmx.actor.profile", { displayName: "saeris.gg" }],
   ]);
 
-  it("resolves each app's column through its own extends, as that app would", () => {
-    const grain = buildOverview(profiles).find((column) => column.collection === GRAIN);
+  it("resolves each app's profile through its own extends, as that app would", () => {
+    const grain = buildOverview(profiles).find((entry) => entry.collection === GRAIN);
 
     expect(grain?.extends).toEqual([BSKY, BASE]);
-    expect(grain?.cells.displayName).toEqual({
-      value: "Drake Costa",
-      source: { collection: BASE },
-    });
-    expect(grain?.cells.description).toEqual({ source: { collection: GRAIN, hidden: true } });
+    expect(grain?.resolved.fields.displayName).toBe("Drake Costa");
+    expect(grain?.resolved.sources.displayName).toEqual({ collection: BASE });
+    expect(grain?.resolved.sources.description).toEqual({ collection: GRAIN, hidden: true });
   });
 
   it("never claims an app without extends inherits anything, since the record doesn't say so", () => {
     const npmx = buildOverview(profiles).find(
-      (column) => column.collection === "dev.npmx.actor.profile",
+      (entry) => entry.collection === "dev.npmx.actor.profile",
     );
 
     expect(npmx?.extends).toEqual([]);
-    expect(npmx?.cells.displayName).toEqual({
-      value: "saeris.gg",
-      source: { collection: "dev.npmx.actor.profile" },
-    });
-    expect(npmx?.cells.description).toEqual({});
+    expect(npmx?.resolved.fields).toEqual({ displayName: "saeris.gg" });
   });
 
-  it("has one column per record, Bluesky first", () => {
-    expect(buildOverview(profiles).map((column) => column.collection)).toEqual([
+  it("has one entry per record, Bluesky first", () => {
+    expect(buildOverview(profiles).map((entry) => entry.collection)).toEqual([
       BSKY,
       BASE,
       "dev.npmx.actor.profile",

@@ -103,8 +103,16 @@ Default to surfacing uncertainty, not hiding it.
   merging it publishes. Published packages keep `main`/`exports` on `src/` for
   the workspace; `publishConfig` swaps in `dist/` when Yarn packs. The site is
   private: Cloudflare Workers Builds deploys it (see its README), not GitHub.
-- **Local editor:** `yarn dev` (Astro, hot reload, sign-in works on localhost);
-  `yarn preview` adds the Worker.
+- **Local editor:** `yarn dev` (Astro, hot reload) at `http://127.0.0.1:4321/editor/`;
+  `yarn preview` adds the Worker. Sign-in redirects to 127.0.0.1, never
+  `localhost`: bsky.social refuses a `localhost` redirect (RFC 8252) while Cirrus
+  accepts one, so testing only against Cirrus hides the bug.
+- **Site routes:** `/` is the (future) marketing page, `/docs/` the developer
+  docs (Starlight's conventions if it grows past one page), `/editor/` the
+  signed-in editor. Marketing code reference: tailark.com.
+- **Editing other apps' records:** permission per collection on first edit
+  (`src/scope.ts` lists what the client metadata declares), and every write
+  follows that app's resolved lexicon (`src/editor/shape.ts`).
 - Do not use `vp install` to bootstrap: it writes a pnpm `devEngines` block that
   fights Yarn. Use `yarn install`.
 

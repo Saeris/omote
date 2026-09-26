@@ -17,12 +17,15 @@ import {
   getSession,
 } from "@atcute/oauth-browser-client";
 import { defaultResolver } from "@omote-social/profiles";
-import { SCOPE } from "./scope";
+import { EDITOR_PATH } from "./paths";
+import { DECLARED_SCOPE, SIGN_IN_SCOPE, withCollection } from "./scope";
 
 export interface Session {
   readonly did: Did;
   /** The account's PDS, as the OAuth exchange reported it. */
   readonly pds: string;
+  /** What the account's server granted, which may be less than was asked for. */
+  readonly scope: string;
   /** Reads and writes as this account. */
   readonly rpc: Client;
   readonly signOut: () => Promise<void>;
@@ -48,7 +51,7 @@ const isLoopback = (): boolean => globalThis.location.hostname === "127.0.0.1";
  */
 const clientId = (redirectUri: string): string => {
   if (isLoopback()) {
-    return `http://localhost?${new URLSearchParams({ redirect_uri: redirectUri, scope: SCOPE }).toString()}`;
+    return `http://localhost?${new URLSearchParams({ redirect_uri: redirectUri, scope: DECLARED_SCOPE }).toString()}`;
   }
 
   return `${globalThis.location.origin}/client-metadata.json`;
@@ -61,9 +64,9 @@ const configure = (): void => {
     return;
   }
 
-  // The site root, not a /callback route: the page that starts sign-in finishes it, on any static host.
+  // The editor's own page, not a /callback route: the page that starts sign-in finishes it, on any static host.
   // On this machine, that page is already on 127.0.0.1 (see isLoopback), so its origin is the redirect's.
-  const redirectUri = `${globalThis.location.origin}/`;
+  const redirectUri = `${globalThis.location.origin}${EDITOR_PATH}`;
 
   configureOAuth({
     metadata: { client_id: clientId(redirectUri), redirect_uri: redirectUri },
@@ -90,6 +93,7 @@ const clientFor = (agent: OAuthUserAgent): Client =>
 const toSession = (agent: OAuthUserAgent): Session => ({
   did: agent.session.info.sub,
   pds: agent.session.info.aud,
+  scope: agent.session.token.scope,
   rpc: clientFor(agent),
   signOut: async () => {
     forget();
@@ -114,7 +118,7 @@ const forget = (): void => {
 };
 
 /** Send the browser to the account's own server to sign in. Navigates away. */
-export const beginSignIn = async (identifier: string): Promise<void> => {
+export const beginSignIn = async (identifier: string, scope = SIGN_IN_SCOPE): Promise<void> => {
   configure();
 
   if (!isActorIdentifier(identifier)) {
@@ -123,12 +127,37 @@ export const beginSignIn = async (identifier: string): Promise<void> => {
 
   const url = await createAuthorizationUrl({
     target: { type: "account", identifier: identifier as ActorIdentifier },
-    scope: SCOPE,
+    scope,
   });
 
   // atcute's advice: let storage flush before leaving the page.
   await new Promise((resolve) => setTimeout(resolve, 200));
   globalThis.location.assign(url.toString());
+};
+
+const RETURN_TO = "omote.returnTo";
+
+/**
+ * Ask the account's server for permission to write one more collection, keeping everything already granted. Navigates away, and back to that profile once approved.
+ */
+export const requestAccess = async (session: Session, collection: string): Promise<void> => {
+  try {
+    globalThis.sessionStorage.setItem(RETURN_TO, collection);
+  } catch {
+    // Blocked storage: the editor opens on the overview instead.
+  }
+  await beginSignIn(session.did, withCollection(session.scope, collection));
+};
+
+/** The profile to reopen after `requestAccess`, once. */
+export const takeReturnTo = (): string | undefined => {
+  try {
+    const collection = globalThis.sessionStorage.getItem(RETURN_TO) ?? undefined;
+    globalThis.sessionStorage.removeItem(RETURN_TO);
+    return collection;
+  } catch {
+    return undefined;
+  }
 };
 
 /**

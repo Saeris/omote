@@ -10,20 +10,26 @@ The Omote profile editor, and a `social.omote.getProfile` XRPC endpoint
 
 Two things on one Cloudflare Worker, with no storage and no secrets:
 
-- **The editor**: static [Astro][astro] pages, with React only for the forms. Sign-in is a public OAuth client that runs entirely in the browser. It asks the account's own server for exactly two things: writing the shared base (`social.omote.actor.profile`), and uploading images. Every other app's profile record it only reads.
+- **The editor**, at `/editor/`: static [Astro][astro] pages, with React only for the forms. Sign-in is a public OAuth client that runs entirely in the browser.
+  - **Sign-in asks for two things:** writing the shared base (`social.omote.actor.profile`), and uploading images.
+  - **Each app's profile is asked for separately**, the first time you edit it, so nobody grants write access to apps they don't use. bsky.social only grants collections the client metadata names, so the ones omote can ask for are listed in [`src/scope.ts`](./src/scope.ts); any other app's profile is read-only.
+  - **Edits follow the app's own lexicon**, resolved from the network: its fields, limits, image formats and required fields. omote never writes `null` or `extends` into a record whose lexicon doesn't declare them, and keeps every field it doesn't edit.
+- **The homepage**, at `/`: a placeholder for now.
 - **The resolve endpoint**: `GET /xrpc/social.omote.getProfile?actor=…&collection=…`, answered by [`@omote-social/profiles`][profiles] on every request. It is open to any origin, and a convenience for prototyping; apps should resolve profiles with the library in production.
 
 ## 🔧 Local Development
 
 ```bash
-yarn dev        # the editor with hot reload, at http://localhost:4321
-yarn preview    # the built site and the Worker together, at http://localhost:8787
+yarn dev        # the site with hot reload, at http://127.0.0.1:4321/editor/
+yarn preview    # the built site and the Worker together, at http://127.0.0.1:8787/editor/
 ```
 
-Sign-in works on `localhost` with no setup: ATProto's OAuth has a development exception for it, so any account can sign in to a local copy. `yarn dev` doesn't run the Worker; use `yarn preview` to try the resolve endpoint:
+Sign-in works on this machine with no setup: ATProto's OAuth has a development exception for it, so any account can sign in to a local copy. The exception's client id is `http://localhost`, but bsky.social only redirects back to `127.0.0.1`, so both servers listen there and a page opened on `localhost` moves itself across.
+
+`yarn dev` doesn't run the Worker; use `yarn preview` to try the resolve endpoint:
 
 ```bash
-curl "http://localhost:8787/xrpc/social.omote.getProfile?actor=alice.example.com&collection=social.grain.actor.profile"
+curl "http://127.0.0.1:8787/xrpc/social.omote.getProfile?actor=alice.example.com&collection=social.grain.actor.profile"
 ```
 
 ## 🚀 Deploying
