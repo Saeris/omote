@@ -52,6 +52,14 @@ describe("finding other apps' profiles", () => {
     ).toEqual({ displayName: "Grain", website: "https://grain.social", avatar: AVATAR });
   });
 
+  it("reads Sifa's bio, which it calls about, and leaves name and avatar to the base as Sifa does", () => {
+    expect(
+      readNativeFields({ headline: "Design Engineer", about: "A decade of design systems." }),
+    ).toEqual({
+      description: "A decade of design systems.",
+    });
+  });
+
   it("treats a blank field as absent, as Tangled's empty strings are", () => {
     expect(readNativeFields({ description: "", pronouns: "" })).toEqual({});
   });

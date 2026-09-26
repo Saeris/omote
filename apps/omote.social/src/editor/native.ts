@@ -56,7 +56,8 @@ export const readNativeFields = (value: unknown): NativeProfile["fields"] => {
   const record = value as Record<string, unknown>;
   const fields: NativeProfile["fields"] = {
     displayName: text(record.displayName) ?? text(record.name),
-    description: text(record.description) ?? text(record.bio),
+    // Sifa calls its bio `about`.
+    description: text(record.description) ?? text(record.bio) ?? text(record.about),
     pronouns: text(record.pronouns),
     website: text(record.website) ?? text(record.mainLink),
     avatar: image(record.avatar),

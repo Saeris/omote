@@ -130,10 +130,28 @@ come before a first release.
    declare another? A declarable base matters as more accounts start outside
    Bluesky.
 6. **Fields and limits.**
-   - Are the six fields the right set?
+   - Are the six fields the right set? **Location** and **links** recur across
+     apps. Tangled has free-text location and a list of links. Sifa has
+     structured location (`community.lexicon.location.address`) and external
+     accounts. Bluesky has only a single website. If either is added, reuse a
+     community lexicon for its shape, as Sifa does.
+   - **Bio length should probably vary by context.** The override inherits
+     Bluesky's 256 graphemes, but a professional "about" (Sifa's is several
+     sentences) does not fit, and the Lexicon Community's base-profile
+     discussion stalled on exactly this: one description length for everyone.
+     A longer limit on the override lets each app truncate to its own layout.
    - Is 10 MB (matching Discord) the right image ceiling? Some PDSes refuse
      over 5 MB by default.
-7. **Lookups at scale.** An app showing many people cannot read one PDS per
+7. **Apps with rich profiles of their own.** Sifa already works the way Omote
+   intends. Its records hold only professional data (headline, positions,
+   skills), and a person's name and avatar come from the base profile. An app
+   like that needs nothing changed: an override for its context (a professional
+   name or headshot) layers on top, and its own records remain its extension
+   data. Tangled shows the opposite pattern: its profile copies the base's
+   avatar, description and pronouns, and those copies drift. Moving those three
+   fields to an override, and keeping pinned repositories, stats and links as
+   Tangled's own, is the migration the rules for apps (§4) describe.
+8. **Lookups at scale.** An app showing many people cannot read one PDS per
    row. A batch `getProfiles` backed by an index of the network's records (the
    role Standard Reader plays for standard.site) is likely needed. Is it part of
    the standard, or a service built on it?
