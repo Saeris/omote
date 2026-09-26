@@ -1,6 +1,6 @@
 {
   "name": "@omote-social/profiles",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Resolve how an ATProto account appears in one app: its profile record, folded over the records it extends. Works in browsers, Node and Workers.",
   "keywords": [
     "atproto",
