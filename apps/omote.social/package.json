@@ -1,0 +1,40 @@
+{
+  "name": "omote.social",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Edit how you appear in each app, and resolve anyone's profile for an app over XRPC.",
+  "license": "MIT",
+  "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
+  "type": "module",
+  "scripts": {
+    "dev": "astro build && wrangler dev",
+    "build": "astro build",
+    "deploy": "astro build && wrangler deploy",
+    "types": "wrangler types worker/worker-configuration.d.ts"
+  },
+  "dependencies": {
+    "@astrojs/react": "catalog:",
+    "@atcute/atproto": "catalog:",
+    "@atcute/client": "catalog:",
+    "@atcute/lexicons": "catalog:",
+    "@atcute/oauth-browser-client": "catalog:",
+    "@hookform/resolvers": "catalog:",
+    "@omote/lexicon": "workspace:*",
+    "@omote/profiles": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "astro": "catalog:",
+    "react": "^19.2.0",
+    "react-aria-components": "catalog:",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "msw": "catalog:",
+    "tailwindcss": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

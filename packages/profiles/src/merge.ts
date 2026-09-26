@@ -16,6 +16,12 @@ export interface Merged {
 }
 
 /**
+ * A blank string is no value. Bluesky writes `displayName: ""` when someone clears their name, and showing that as a name would hide the handle an app falls back to.
+ */
+const present = <T>(value: T | string | undefined): T | string | undefined =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
+/**
  * One context's profile: the override where it says something, the base where it does not, minus what the override hides.
  *
  * Pure, and the heart of the model, so every app that resolves profiles, through this library or by hand, should land on the same answer:
@@ -33,8 +39,8 @@ export const mergeProfile = (
   const sources: Partial<Record<Field, Source>> = {};
 
   for (const field of FIELDS) {
-    const own = override?.[field];
-    const inherited = base?.[field];
+    const own = present(override?.[field]);
+    const inherited = present(base?.[field]);
 
     if (own !== undefined) {
       fields[field] = own;

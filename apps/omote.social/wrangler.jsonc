@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The editor's static pages, and the resolve API under /xrpc. No storage and
+  // no secrets: profiles live in each person's own PDS, and sign-in happens
+  // entirely in the browser.
+  "name": "omote-social",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  // Add once omote.social is registered:
+  // "routes": [{ "pattern": "omote.social", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    // Only the API runs code; everything else is served as files.
+    "run_worker_first": ["/xrpc/*"],
+  },
+}

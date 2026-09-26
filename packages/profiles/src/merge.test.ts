@@ -49,6 +49,17 @@ describe("one context's profile", () => {
     expect(sources).toEqual({});
   });
 
+  it("treats a blank name as no name, so an app falls back to the handle instead of showing nothing", () => {
+    // Bluesky writes displayName "" when someone clears it: seen on real accounts.
+    const { fields, sources } = mergeProfile(
+      { displayName: "" },
+      { displayName: "  ", createdAt: CREATED },
+    );
+
+    expect(fields).toEqual({});
+    expect(sources).toEqual({});
+  });
+
   it("is empty for someone with neither, who is then known only by handle", () => {
     expect(mergeProfile(undefined, undefined)).toEqual({ fields: {}, sources: {} });
   });

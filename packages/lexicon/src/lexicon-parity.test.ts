@@ -83,3 +83,26 @@ describe("a context", () => {
     }
   });
 });
+
+describe("an image in a record", () => {
+  const link = "bafkreibq2jwzpz3nqshkomrrqdrdced6mt73dmupg2qjf4iybntn7s5p2m";
+
+  it("is read as Cirrus's listRecords returns it, without $type, and written back canonically", () => {
+    // Seen live on venue-pds.taproom.social: getRecord returns the canonical form, listRecords this one.
+    const fromListRecords = {
+      ref: { $link: link },
+      mimeType: "image/png",
+      size: 2799,
+      original: { $type: "blob", ref: { $link: link }, mimeType: "image/png", size: 2799 },
+    };
+
+    const parsed = v.parse(profileOverrideSchema, record({ avatar: fromListRecords }));
+
+    expect(parsed.avatar).toEqual({
+      $type: "blob",
+      ref: { $link: link },
+      mimeType: "image/png",
+      size: 2799,
+    });
+  });
+});

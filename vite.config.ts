@@ -2,6 +2,8 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   lint: {
+    // `wrangler types` owns these.
+    ignorePatterns: ["**/worker-configuration.d.ts"],
     options: {
       // Without these, `vp check` formats and lints but never type-checks, and
       // still reports success.

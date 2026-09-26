@@ -1,0 +1,15 @@
+---
+import { Editor } from "../editor/Editor";
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="omote: how you appear in each app">
+  <header class="flex flex-col gap-3">
+    <h1 class="text-3xl font-semibold tracking-tight">omote</h1>
+    <p class="max-w-2xl text-neutral-700">
+      Your ATProto account is one identity, everywhere. How you present it doesn't have to be. Choose
+      how you appear in each app, and everything you leave alone falls back to your base profile.
+    </p>
+  </header>
+  <Editor client:only="react" />
+</Base>

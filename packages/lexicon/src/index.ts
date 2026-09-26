@@ -40,12 +40,25 @@ export const contextSchema = v.pipe(
 export type Context = v.InferOutput<typeof contextSchema>;
 
 /** A blob reference as it appears in a record. */
-export const blobSchema = v.object({
-  $type: v.literal("blob"),
-  ref: v.object({ $link: v.string() }),
-  mimeType: v.string(),
-  size: v.number(),
-});
+/**
+ * A blob reference, normalised to the canonical `{ $type: "blob", ref, mimeType, size }`.
+ *
+ * Tolerant on the way in because servers disagree: Cirrus's `listRecords` returns blobs without `$type` and with a nested `original` copy, while its `getRecord` returns the canonical form. Canonical on the way out, so a record read from one and saved again never writes the malformed shape back.
+ */
+export const blobSchema = v.pipe(
+  v.looseObject({
+    $type: v.optional(v.literal("blob")),
+    ref: v.object({ $link: v.string() }),
+    mimeType: v.string(),
+    size: v.number(),
+  }),
+  v.transform((blob) => ({
+    $type: "blob" as const,
+    ref: { $link: blob.ref.$link },
+    mimeType: blob.mimeType,
+    size: blob.size,
+  })),
+);
 
 export type Blob = v.InferOutput<typeof blobSchema>;
 
