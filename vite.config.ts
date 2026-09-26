@@ -11,6 +11,10 @@ export default defineConfig({
       typeCheck: true,
     },
   },
+  fmt: {
+    // Bumpy writes these, in its own layout, as part of the version PR.
+    ignorePatterns: ["CHANGELOG.md"],
+  },
   test: {
     // Each workspace owns its Vitest project: the library runs in Node, the
     // editor's pure logic too, and each resolves its own aliases.
