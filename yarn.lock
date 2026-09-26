@@ -1787,10 +1787,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@omote-social/omote.social@workspace:."
   dependencies:
-    "@atcute/identity": "catalog:"
-    "@atcute/identity-resolver": "catalog:"
-    "@atcute/lexicon-doc": "catalog:"
-    "@atcute/lexicon-resolver": "catalog:"
     "@types/node": "npm:^24.0.0"
     "@varlock/bumpy": "npm:^1.18.1"
     typescript: "npm:~5.9.2"
@@ -4857,6 +4853,10 @@ __metadata:
     "@astrojs/react": "catalog:"
     "@atcute/atproto": "catalog:"
     "@atcute/client": "catalog:"
+    "@atcute/identity": "catalog:"
+    "@atcute/identity-resolver": "catalog:"
+    "@atcute/lexicon-doc": "catalog:"
+    "@atcute/lexicon-resolver": "catalog:"
     "@atcute/lexicons": "catalog:"
     "@atcute/oauth-browser-client": "catalog:"
     "@hookform/resolvers": "catalog:"
