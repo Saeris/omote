@@ -1648,6 +1648,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@omote-social/lexicon@workspace:packages/lexicon"
   dependencies:
+    "@atcute/lexicons": "catalog:"
     valibot: "catalog:"
   languageName: unknown
   linkType: soft

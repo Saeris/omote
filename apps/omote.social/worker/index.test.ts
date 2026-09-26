@@ -1,4 +1,4 @@
-import { DID, HANDLE, bsky, override, reset, server, state } from "@omote-social/profiles/testing";
+import { DID, HANDLE, bsky, profile, reset, server, state } from "@omote-social/profiles/testing";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import worker from "./index";
 
@@ -18,12 +18,14 @@ const call = (path: string, init?: RequestInit) =>
     env,
   );
 
+const GRAIN = "social.grain.actor.profile";
+
 describe("social.omote.getProfile", () => {
   it("answers any origin, since every app that shows profiles is on another one", async () => {
-    state.records = override("social.taproom", { displayName: "Alice M." });
+    state.records = profile(GRAIN, { displayName: "Alice M." });
 
     const response = await call(
-      `/xrpc/social.omote.getProfile?actor=${HANDLE}&context=social.taproom`,
+      `/xrpc/social.omote.getProfile?actor=${HANDLE}&collection=${GRAIN}`,
     );
 
     expect(response.status).toBe(200);
@@ -34,35 +36,39 @@ describe("social.omote.getProfile", () => {
   it("gives the same answer as the library, so the service is only ever a convenience", async () => {
     state.records = {
       ...bsky({ displayName: "Alice Mori", description: "Lagers." }),
-      ...override("social.taproom", { hide: ["description"] }),
+      ...profile(GRAIN, { extends: ["app.bsky.actor.profile"], description: null }),
     };
 
     const body = await (
-      await call(`/xrpc/social.omote.getProfile?actor=${DID}&context=social.taproom`)
+      await call(`/xrpc/social.omote.getProfile?actor=${DID}&collection=${GRAIN}`)
     ).json();
 
     expect(body).toEqual({
       did: DID,
       handle: HANDLE,
-      context: "social.taproom",
+      collection: GRAIN,
       displayName: "Alice Mori",
-      sources: { displayName: "base", description: "hidden" },
+      sources: {
+        displayName: { collection: "app.bsky.actor.profile" },
+        description: { collection: GRAIN, hidden: true },
+      },
+      chain: ["app.bsky.actor.profile", GRAIN],
     });
   });
 
-  it("names a bad context as XRPC does, so a client can tell it from a missing account", async () => {
-    const response = await call(`/xrpc/social.omote.getProfile?actor=${DID}&context=taproom`);
+  it("names a bad collection as XRPC does, so a client can tell it from a missing account", async () => {
+    const response = await call(
+      `/xrpc/social.omote.getProfile?actor=${DID}&collection=social.grain`,
+    );
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toMatchObject({ error: "InvalidContext" });
+    expect(await response.json()).toMatchObject({ error: "InvalidCollection" });
   });
 
   it("blames the upstream PDS, not the caller, when it cannot be read", async () => {
     state.pdsDown = true;
 
-    const response = await call(
-      `/xrpc/social.omote.getProfile?actor=${DID}&context=social.taproom`,
-    );
+    const response = await call(`/xrpc/social.omote.getProfile?actor=${DID}&collection=${GRAIN}`);
 
     expect(response.status).toBe(502);
     expect(await response.json()).toMatchObject({ error: "UpstreamFailure" });

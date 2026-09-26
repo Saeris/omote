@@ -1,7 +1,7 @@
 {
   "name": "@omote-social/profiles",
   "version": "0.0.0",
-  "description": "Resolve how an ATProto account appears in one app: its per-app override merged over its base profile. Works in browsers, Node and Workers.",
+  "description": "Resolve how an ATProto account appears in one app: its profile record, folded over the records it extends. Works in browsers, Node and Workers.",
   "keywords": [
     "atproto",
     "bluesky",

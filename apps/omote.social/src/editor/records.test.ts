@@ -1,17 +1,25 @@
-import { profileOverrideSchema } from "@omote-social/lexicon";
+import { baseProfileSchema } from "@omote-social/lexicon";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { formSchema, toForm, toRecord, type FormValues } from "./records";
 
-const blank: FormValues = { displayName: "", description: "", pronouns: "", website: "", hide: [] };
+const blank: FormValues = {
+  displayName: "",
+  description: "",
+  pronouns: "",
+  website: "",
+  hide: [],
+  fromBluesky: true,
+};
 const NOW = () => "2026-09-26T12:00:00.000Z";
 
-describe("saving an override", () => {
-  it("leaves blank fields out, so they fall back to the base profile instead of showing nothing", () => {
+describe("saving the shared base", () => {
+  it("leaves blank fields out, so they are inherited instead of showing nothing", () => {
     const record = toRecord({ ...blank, displayName: "Alice M." }, {}, undefined, NOW);
 
     expect(record).toEqual({
-      $type: "social.omote.profile",
+      $type: "social.omote.actor.profile",
+      extends: ["app.bsky.actor.profile"],
       displayName: "Alice M.",
       createdAt: NOW(),
     });
@@ -23,17 +31,38 @@ describe("saving an override", () => {
     );
   });
 
-  it("writes hide only when something is hidden, keeping the record sparse", () => {
-    expect(toRecord(blank, {}, undefined, NOW)).not.toHaveProperty("hide");
-    expect(toRecord({ ...blank, hide: ["description"] }, {}, undefined, NOW).hide).toEqual([
-      "description",
-    ]);
+  it("writes a hidden field as null, whatever was typed, since hiding is the stronger choice", () => {
+    const record = toRecord(
+      { ...blank, description: "Typed, then hidden.", hide: ["description", "avatar"] },
+      {},
+      undefined,
+      NOW,
+    );
+
+    expect(record).toMatchObject({ description: null, avatar: null });
   });
 
-  it("keeps when the override was first made", () => {
-    const existing = { createdAt: "2026-01-01T00:00:00.000Z" };
+  it("stands alone when told not to start from Bluesky, for someone whose account began elsewhere", () => {
+    expect(toRecord({ ...blank, fromBluesky: false }, {}, undefined, NOW)).not.toHaveProperty(
+      "extends",
+    );
+  });
 
-    expect(toRecord(blank, {}, existing, NOW).createdAt).toBe("2026-01-01T00:00:00.000Z");
+  it("keeps what it doesn't know, other bases included, since other apps write this record too", () => {
+    const existing = {
+      $type: "social.omote.actor.profile",
+      extends: ["app.bsky.actor.profile", "com.example.actor.profile"],
+      theme: { accent: "#b33" },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    const record = toRecord({ ...blank, fromBluesky: false }, {}, existing, NOW);
+
+    expect(record).toMatchObject({
+      extends: ["com.example.actor.profile"],
+      theme: { accent: "#b33" },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
   });
 
   it("always produces a record the lexicon accepts", () => {
@@ -44,21 +73,27 @@ describe("saving an override", () => {
         pronouns: "she/her",
         website: "https://alice.example",
         hide: ["banner"],
+        fromBluesky: true,
       },
       {},
       undefined,
       NOW,
     );
 
-    expect(v.safeParse(profileOverrideSchema, record).success).toBe(true);
+    expect(v.safeParse(baseProfileSchema, record).success).toBe(true);
   });
 });
 
-describe("editing an override", () => {
-  it("shows unknown hide values as nothing rather than crashing, since knownValues are open", () => {
-    expect(toForm({ createdAt: NOW(), hide: ["description", "someFutureField"] }).hide).toEqual([
-      "description",
-    ]);
+describe("editing the shared base", () => {
+  it("shows null as hidden and silence as blank, the two things a person can choose", () => {
+    const form = toForm({ displayName: "Alice M.", description: null });
+
+    expect(form).toMatchObject({ displayName: "Alice M.", description: "", hide: ["description"] });
+  });
+
+  it("starts a new shared base from Bluesky, where most people's profile is today", () => {
+    expect(toForm(undefined).fromBluesky).toBe(true);
+    expect(toForm({ displayName: "Alice M." }).fromBluesky).toBe(false);
   });
 
   it("rejects a website that is not a URL, but accepts none at all", () => {

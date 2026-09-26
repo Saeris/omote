@@ -37,17 +37,16 @@ export const reset = (): void => {
   state.pdsDown = false;
 };
 
-export const bsky = (value: Record<string, unknown>) => ({
-  "app.bsky.actor.profile/self": { $type: "app.bsky.actor.profile", ...value },
+export const bsky = (value: Record<string, unknown>) => profile("app.bsky.actor.profile", value);
+
+/** Any app's profile record, at its `self` key. */
+export const profile = (collection: string, value: Record<string, unknown>) => ({
+  [`${collection}/self`]: { $type: collection, ...value },
 });
 
-export const override = (context: string, value: Record<string, unknown>) => ({
-  [`social.omote.profile/${context}`]: {
-    $type: "social.omote.profile",
-    createdAt: "2026-09-26T00:00:00.000Z",
-    ...value,
-  },
-});
+/** The shared base, `social.omote.actor.profile`. */
+export const base = (value: Record<string, unknown>) =>
+  profile("social.omote.actor.profile", value);
 
 export const server = setupServer(
   http.get("https://plc.directory/:did", () => HttpResponse.json(didDocument)),

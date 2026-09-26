@@ -2,96 +2,68 @@ import type { Did } from "@atcute/lexicons";
 import {
   IMAGE_TYPES,
   MAX_IMAGE_BYTES,
-  NSID_BSKY_PROFILE,
-  NSID_PROFILE,
-  baseProfileSchema,
+  NSID_BASE_PROFILE,
   blobSchema,
-  profileOverrideSchema,
-  type BaseProfile,
   type Blob,
-  type ProfileOverride,
 } from "@omote-social/lexicon";
 import * as v from "valibot";
 import type { Session } from "../auth";
-import { contextOf, isNativeProfile, readNativeFields, type NativeProfile } from "./native";
+import { isProfileCollection } from "./collections";
 
 /**
  * The editor's reads and writes, all against the signed-in account's own PDS.
  */
 
-export interface Override {
-  /** The context, which is also the record key. */
-  readonly context: string;
-  /** Undefined when the record exists but cannot be read, e.g. written by another app with fields out of range. */
-  readonly record: ProfileOverride | undefined;
-  /** Why it could not be read. Shown, never hidden: it is still this person's record. */
-  readonly problem?: string;
-}
+/** Every profile record in the account, keyed by collection: what `resolveProfile` takes. */
+export type Profiles = ReadonlyMap<string, Record<string, unknown>>;
 
 const failure = (what: string, data: { error: string; message?: string }): Error =>
   new Error(`${what}: ${data.message ?? data.error}`);
 
-/** Every context this account has customised. */
-export const listOverrides = async (session: Session): Promise<Override[]> => {
-  const overrides: Override[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const response = await session.rpc.get("com.atproto.repo.listRecords", {
-      params: {
-        repo: session.did,
-        collection: NSID_PROFILE,
-        limit: 100,
-        ...(cursor && { cursor }),
-      },
-    });
-    if (!response.ok) throw failure("Could not list your profiles", response.data);
-
-    for (const entry of response.data.records) {
-      const parsed = v.safeParse(profileOverrideSchema, entry.value);
-      const context = entry.uri.split("/").at(-1);
-      if (!context) continue;
-      overrides.push(
-        parsed.success
-          ? { context, record: parsed.output }
-          : { context, record: undefined, problem: v.summarize(parsed.issues) },
-      );
-    }
-    cursor = response.data.cursor;
-  } while (cursor);
-
-  return overrides;
-};
-
-/** The base profile every override falls back to, or undefined for an account that has none. */
-export const getBase = async (session: Session): Promise<BaseProfile | undefined> => {
-  const response = await session.rpc.get("com.atproto.repo.getRecord", {
-    params: { repo: session.did, collection: NSID_BSKY_PROFILE, rkey: "self" },
+/**
+ * Every app's profile record in this account, Bluesky's and the shared base included.
+ *
+ * `describeRepo` lists the collections, so this finds apps omote has never heard of. Each is read at `self`, where `extends` looks for a base.
+ */
+export const listProfiles = async (session: Session): Promise<Profiles> => {
+  const described = await session.rpc.get("com.atproto.repo.describeRepo", {
+    params: { repo: session.did },
   });
+  if (!described.ok) throw failure("Could not list your records", described.data);
 
-  if (!response.ok && response.data.error === "RecordNotFound") {
-    return undefined;
-  }
-  if (!response.ok) throw failure("Could not read your base profile", response.data);
+  const entries = await Promise.all(
+    described.data.collections.filter(isProfileCollection).map(async (collection) => {
+      const response = await session.rpc.get("com.atproto.repo.getRecord", {
+        params: { repo: session.did, collection: collection as never, rkey: "self" },
+      });
+      if (!response.ok && response.data.error === "RecordNotFound") return undefined;
+      if (!response.ok) throw failure(`Could not read ${collection}`, response.data);
 
-  const parsed = v.safeParse(baseProfileSchema, response.data.value);
-  return parsed.success ? parsed.output : undefined;
+      return [collection, response.data.value as Record<string, unknown>] as const;
+    }),
+  );
+
+  return new Map(entries.filter((entry) => entry !== undefined));
 };
 
-export const saveOverride = async (
+export const saveBase = async (
   session: Session,
-  context: string,
-  record: ProfileOverride,
+  record: Record<string, unknown>,
 ): Promise<void> => {
   const response = await session.rpc.post("com.atproto.repo.putRecord", {
-    input: { repo: session.did, collection: NSID_PROFILE, rkey: context, record: record as never },
+    input: {
+      repo: session.did,
+      collection: NSID_BASE_PROFILE,
+      rkey: "self",
+      record: record as never,
+    },
   });
   if (!response.ok) throw failure("Could not save", response.data);
 };
 
-export const deleteOverride = async (session: Session, context: string): Promise<void> => {
+export const deleteBase = async (session: Session): Promise<void> => {
   const response = await session.rpc.post("com.atproto.repo.deleteRecord", {
-    input: { repo: session.did, collection: NSID_PROFILE, rkey: context },
+    input: { repo: session.did, collection: NSID_BASE_PROFILE, rkey: "self" },
   });
   if (!response.ok) throw failure("Could not delete", response.data);
 };
@@ -122,30 +94,3 @@ export const uploadImage = async (session: Session, file: File): Promise<Blob> =
 };
 
 export type { Did };
-
-/**
- * Other apps' own profile records in this account: read-only, so the overview can show what each app is using.
- *
- * A collection's first record stands for it: these are `self` singletons in every app seen so far.
- */
-export const listNativeProfiles = async (session: Session): Promise<NativeProfile[]> => {
-  const described = await session.rpc.get("com.atproto.repo.describeRepo", {
-    params: { repo: session.did },
-  });
-  if (!described.ok) throw failure("Could not list your records", described.data);
-
-  const collections = described.data.collections.filter(isNativeProfile);
-  const profiles = await Promise.all(
-    collections.map(async (collection): Promise<NativeProfile | undefined> => {
-      const response = await session.rpc.get("com.atproto.repo.listRecords", {
-        params: { repo: session.did, collection: collection as never, limit: 1 },
-      });
-      const first = response.ok ? response.data.records[0] : undefined;
-      return first
-        ? { context: contextOf(collection), collection, fields: readNativeFields(first.value) }
-        : undefined;
-    }),
-  );
-
-  return profiles.filter((profile): profile is NativeProfile => profile !== undefined);
-};

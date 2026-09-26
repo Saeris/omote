@@ -3,4 +3,4 @@
 "@omote-social/profiles": minor
 ---
 
-First release: the social.omote.profile lexicon, and getProfile to resolve how an account appears in an app.
+First release: the social.omote.actor.profile lexicon (the shared base, and the template apps copy), and getProfile to resolve an app's profile record through the records it extends.

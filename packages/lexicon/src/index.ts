@@ -4,14 +4,16 @@
  * The JSON in `lexicons/` is what the network reads; these are what our code parses with. `lexicon-parity.test.ts` holds the two to the same limits, so neither can drift.
  */
 
+import { isNsid } from "@atcute/lexicons/syntax";
 import * as v from "valibot";
 
-export const NSID_PROFILE = "social.omote.profile";
+/** The shared base: a profile that belongs to the account holder, not to an app. */
+export const NSID_BASE_PROFILE = "social.omote.actor.profile";
 export const NSID_GET_PROFILE = "social.omote.getProfile";
-/** The base profile every override falls back to. */
+/** Bluesky's profile: the template for the shared fields, and the root most accounts have today. */
 export const NSID_BSKY_PROFILE = "app.bsky.actor.profile";
 
-/** The profile fields an override can set or hide, in display order. */
+/** The shared fields, in display order: Bluesky's names and types, which every profile record can take part in inheritance with. */
 export const FIELDS = [
   "displayName",
   "description",
@@ -23,23 +25,15 @@ export const FIELDS = [
 
 export type Field = (typeof FIELDS)[number];
 
-/**
- * A context: the NSID authority of an app, e.g. `social.taproom`.
- *
- * It doubles as the record key, so it must also be a valid rkey. A reversed domain name is both, and it names the app by the same authority its own lexicons live under, which the app already owns.
- */
-export const contextSchema = v.pipe(
+/** How many bases one record may name. */
+export const MAX_EXTENDS = 8;
+
+/** A collection's NSID, e.g. `app.bsky.actor.profile`. */
+export const nsidSchema = v.pipe(
   v.string(),
-  v.maxLength(253),
-  v.regex(
-    /^[a-z][a-z0-9-]{0,62}(\.[a-z0-9][a-z0-9-]{0,62})+$/u,
-    "A context is an app's reversed domain, e.g. social.taproom",
-  ),
+  v.check((value) => isNsid(value), "Not an NSID"),
 );
 
-export type Context = v.InferOutput<typeof contextSchema>;
-
-/** A blob reference as it appears in a record. */
 /**
  * A blob reference, normalised to the canonical `{ $type: "blob", ref, mimeType, size }`.
  *
@@ -65,7 +59,7 @@ export type Blob = v.InferOutput<typeof blobSchema>;
 /**
  * The image types Discord accepts for avatars and banners. Animated GIF, WebP and AVIF are allowed; whether to animate is each app's choice.
  *
- * Wider than Bluesky's PNG/JPEG on purpose: nothing in the protocol limits a blob's type, and bsky.social and Cirrus both accept these.
+ * Wider than Bluesky's PNG/JPEG on purpose: limits are not part of the shared type, nothing in the protocol limits a blob's type, and bsky.social and Cirrus both accept these.
  */
 export const IMAGE_TYPES = [
   "image/png",
@@ -92,47 +86,38 @@ const imageSchema = v.pipe(
 const text = (graphemes: number, length: number) =>
   v.pipe(v.string(), v.maxGraphemes(graphemes), v.maxLength(length));
 
-/** `social.omote.profile`: how the account appears in one context. */
-export const profileOverrideSchema = v.object({
-  displayName: v.optional(text(64, 640)),
-  description: v.optional(text(256, 2560)),
-  pronouns: v.optional(text(20, 200)),
-  website: v.optional(v.pipe(v.string(), v.url())),
-  avatar: v.optional(imageSchema),
-  banner: v.optional(imageSchema),
-  // Lexicon `knownValues` are open, so unknown entries are kept rather than rejected.
-  hide: v.optional(v.pipe(v.array(v.string()), v.maxLength(6))),
-  createdAt: v.pipe(v.string(), v.isoTimestamp()),
-});
-
-export type ProfileOverride = v.InferOutput<typeof profileOverrideSchema>;
+/** A shared field: absent inherits, `null` hides what the bases say. */
+const shared = <T extends v.GenericSchema>(schema: T) => v.optional(v.nullable(schema));
 
 /**
- * The parts of `app.bsky.actor.profile` a base contributes.
+ * `social.omote.actor.profile`: the shared base, and the template apps copy.
  *
- * Loose on purpose: this is someone else's record, so anything we do not use is ignored rather than validated, and a field that fails its check is dropped rather than failing the whole profile.
+ * Loose, so a record written by a newer version of this lexicon keeps the fields this one doesn't know when it is parsed and written back.
  */
-/** A field kept if valid and dropped if not, instead of failing the whole record. */
-const lenient = <T extends v.GenericSchema>(schema: T) => v.fallback(v.optional(schema), undefined);
-
-export const baseProfileSchema = v.object({
-  displayName: lenient(v.string()),
-  description: lenient(v.string()),
-  pronouns: lenient(v.string()),
-  website: lenient(v.string()),
-  avatar: lenient(blobSchema),
-  banner: lenient(blobSchema),
+export const baseProfileSchema = v.looseObject({
+  extends: v.optional(v.pipe(v.array(nsidSchema), v.maxLength(MAX_EXTENDS))),
+  displayName: shared(text(64, 640)),
+  description: shared(text(256, 2560)),
+  pronouns: shared(text(20, 200)),
+  website: shared(v.pipe(v.string(), v.url())),
+  avatar: shared(imageSchema),
+  banner: shared(imageSchema),
+  createdAt: v.optional(v.pipe(v.string(), v.isoTimestamp())),
 });
 
 export type BaseProfile = v.InferOutput<typeof baseProfileSchema>;
 
-export type Source = "override" | "base" | "hidden";
+/** `social.omote.getProfile#source`: the record a field came from, or the one whose `null` hid it. */
+export interface Source {
+  readonly collection: string;
+  readonly hidden?: true;
+}
 
 /** `social.omote.getProfile#profileView`. */
 export interface ProfileView {
   readonly did: string;
   readonly handle: string;
-  readonly context: string;
+  readonly collection: string;
   readonly displayName?: string;
   readonly description?: string;
   readonly pronouns?: string;
@@ -141,4 +126,6 @@ export interface ProfileView {
   readonly avatar?: string;
   readonly banner?: string;
   readonly sources: Partial<Record<Field, Source>>;
+  /** The records applied, lowest precedence first. */
+  readonly chain: readonly string[];
 }

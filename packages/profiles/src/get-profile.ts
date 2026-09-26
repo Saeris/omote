@@ -10,20 +10,11 @@ import {
   type ActorResolver,
 } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons";
-import { isActorIdentifier } from "@atcute/lexicons/syntax";
-import {
-  NSID_BSKY_PROFILE,
-  NSID_PROFILE,
-  baseProfileSchema,
-  contextSchema,
-  profileOverrideSchema,
-  type Blob,
-  type ProfileView,
-} from "@omote-social/lexicon";
-import * as v from "valibot";
-import { mergeProfile } from "./merge";
+import { isActorIdentifier, isNsid } from "@atcute/lexicons/syntax";
+import type { Blob, ProfileView } from "@omote-social/lexicon";
+import { loadChain, resolveProfile, type ResolveOptions } from "./resolve";
 
-export interface GetProfileOptions {
+export interface GetProfileOptions extends ResolveOptions {
   /** Resolves a handle or DID to its DID, handle and PDS. Defaults to DNS-over-HTTPS and `.well-known` for handles, and PLC or the web for DIDs: no AppView of anyone's in the path. */
   readonly resolver?: ActorResolver;
   readonly fetch?: typeof globalThis.fetch;
@@ -33,7 +24,7 @@ export interface GetProfileOptions {
 
 export type ProfileErrorCode =
   | "InvalidActor"
-  | "InvalidContext"
+  | "InvalidCollection"
   | "ActorNotFound"
   | "RecordUnavailable";
 
@@ -76,16 +67,10 @@ export const blobUrl = (pds: string, did: string, blob: Blob): string => {
   return url.toString();
 };
 
-/** One record from a repo, or `undefined` if there is none. Any other failure is thrown: a missing profile and an unreachable PDS are different answers. */
-const getRecord = async (
-  client: Client,
-  repo: string,
-  collection: string,
-  rkey: string,
-  signal: AbortSignal,
-) => {
+/** A collection's `self` record, or `undefined` if there is none. Any other failure is thrown: a missing profile and an unreachable PDS are different answers. */
+const getRecord = async (client: Client, repo: string, collection: string, signal: AbortSignal) => {
   const response = await client.get("com.atproto.repo.getRecord", {
-    params: { repo: repo as ActorIdentifier, collection: collection as never, rkey },
+    params: { repo: repo as ActorIdentifier, collection: collection as never, rkey: "self" },
     signal,
   });
 
@@ -99,29 +84,28 @@ const getRecord = async (
 
   throw new ProfileError(
     "RecordUnavailable",
-    `Could not read ${collection}/${rkey}: ${response.data.error}`,
+    `Could not read ${collection}/self: ${response.data.error}`,
   );
 };
 
 /**
- * How an account appears in one context: that context's override over the account's base profile.
+ * How an account appears in the app whose profile record is `collection` (e.g. `social.grain.actor.profile`): that record, folded over the records it extends.
  *
- * Reads straight from the account's own PDS. A record that is missing is normal; one that fails its schema is treated as missing rather than failing the lookup, because it was written by someone else and a bad field there should cost that field, not the profile.
+ * Reads straight from the account's own PDS. A missing record is normal; a malformed field costs that field, not the profile, because the record was written by someone else.
  */
 export const getProfile = async (
   actor: string,
-  context: string,
+  collection: string,
   options: GetProfileOptions = {},
 ): Promise<ProfileView> => {
   if (!isActorIdentifier(actor)) {
     throw new ProfileError("InvalidActor", `Not a handle or DID: ${actor}`);
   }
 
-  // safeParse, not v.is: the guard would narrow `context` to never in the message below.
-  if (!v.safeParse(contextSchema, context).success) {
+  if (!isNsid(collection)) {
     throw new ProfileError(
-      "InvalidContext",
-      `Not a context (an app's reversed domain, e.g. social.taproom): ${context}`,
+      "InvalidCollection",
+      `Not a collection (an NSID, e.g. social.grain.actor.profile): ${collection}`,
     );
   }
 
@@ -145,17 +129,12 @@ export const getProfile = async (
     }),
   });
 
-  const [baseRecord, overrideRecord] = await Promise.all([
-    getRecord(client, resolved.did, NSID_BSKY_PROFILE, "self", signal),
-    getRecord(client, resolved.did, NSID_PROFILE, context, signal),
-  ]);
-
-  const base = v.safeParse(baseProfileSchema, baseRecord);
-  const override = v.safeParse(profileOverrideSchema, overrideRecord);
-  const { fields, sources } = mergeProfile(
-    base.success ? base.output : undefined,
-    override.success ? override.output : undefined,
+  const records = await loadChain(
+    collection,
+    (current) => getRecord(client, resolved.did, current, signal),
+    options,
   );
+  const { fields, sources, chain } = resolveProfile(records, collection, options);
 
   const text = (value: unknown) => (typeof value === "string" ? value : undefined);
   const image = (value: unknown) =>
@@ -166,7 +145,7 @@ export const getProfile = async (
   const view = {
     did: resolved.did,
     handle: resolved.handle,
-    context,
+    collection,
     displayName: text(fields.displayName),
     description: text(fields.description),
     pronouns: text(fields.pronouns),
@@ -174,6 +153,7 @@ export const getProfile = async (
     avatar: image(fields.avatar),
     banner: image(fields.banner),
     sources,
+    chain,
   };
 
   // Absent rather than undefined, so the JSON the service returns matches the lexicon.

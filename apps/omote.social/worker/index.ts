@@ -17,21 +17,21 @@ const xrpcError = (status: number, error: string, message: string) =>
 /** XRPC errors are 400s with a name; only a failure on someone else's server is our 502. */
 const STATUS: Record<ProfileErrorCode, [number, string]> = {
   InvalidActor: [400, "InvalidRequest"],
-  InvalidContext: [400, "InvalidContext"],
+  InvalidCollection: [400, "InvalidCollection"],
   ActorNotFound: [400, "ActorNotFound"],
   RecordUnavailable: [502, "UpstreamFailure"],
 };
 
 export const getProfileRoute = async (url: URL): Promise<Response> => {
   const actor = url.searchParams.get("actor");
-  const context = url.searchParams.get("context");
+  const collection = url.searchParams.get("collection");
 
-  if (!actor || !context) {
-    return xrpcError(400, "InvalidRequest", "Both actor and context are required.");
+  if (!actor || !collection) {
+    return xrpcError(400, "InvalidRequest", "Both actor and collection are required.");
   }
 
   try {
-    const profile = await getProfile(actor, context);
+    const profile = await getProfile(actor, collection);
 
     return Response.json(profile, {
       headers: {

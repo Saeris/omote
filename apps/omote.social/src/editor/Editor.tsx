@@ -1,24 +1,12 @@
-import { contextSchema } from "@omote-social/lexicon";
 import { defaultResolver } from "@omote-social/profiles";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Button,
-  FieldError,
-  Form,
-  Input,
-  Label,
-  ListBox,
-  ListBoxItem,
-  Text,
-  TextField,
-} from "react-aria-components";
-import * as v from "valibot";
+import { Button, FieldError, Form, Input, Label, Text, TextField } from "react-aria-components";
 import { beginSignIn, currentSession, type Session } from "../auth";
-import { getBase, listNativeProfiles, listOverrides } from "./api";
+import { listProfiles } from "./api";
+import { BaseEditor } from "./BaseEditor";
 import { Overview } from "./Overview";
 import { buildOverview } from "./overview-model";
-import { OverrideEditor } from "./OverrideEditor";
 
 const queryClient = new QueryClient();
 
@@ -84,23 +72,14 @@ const Workspace = ({ session }: { readonly session: Session }) => {
     queryKey: ["handle", session.did],
     queryFn: async () => (await defaultResolver().resolve(session.did)).handle,
   });
-  const base = useQuery({ queryKey: ["base", session.did], queryFn: () => getBase(session) });
-  const overrides = useQuery({
-    queryKey: ["overrides", session.did],
-    queryFn: () => listOverrides(session),
+  const profiles = useQuery({
+    queryKey: ["profiles", session.did],
+    queryFn: () => listProfiles(session),
   });
-  const natives = useQuery({
-    queryKey: ["natives", session.did],
-    queryFn: () => listNativeProfiles(session),
-  });
-  const [selected, setSelected] = useState<string>();
-  const [adding, setAdding] = useState("");
-  const addingValid = v.safeParse(contextSchema, adding).success;
+  const [editing, setEditing] = useState(false);
 
-  const contexts = [
-    ...new Set([...(overrides.data ?? []).map((o) => o.context), ...(selected ? [selected] : [])]),
-  ];
-  const current = overrides.data?.find((o) => o.context === selected);
+  const tab = (active: boolean) =>
+    `rounded-md px-3 py-2 text-left text-sm ${active ? "bg-neutral-900 text-white" : ""}`;
 
   return (
     <div className="flex flex-col gap-8">
@@ -119,106 +98,34 @@ const Workspace = ({ session }: { readonly session: Session }) => {
         </Button>
       </header>
 
-      {!base.isPending && !base.data && (
-        <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-          You have no base profile yet, so apps show you by your handle unless you customise them
-          here.
-        </p>
-      )}
-
       <div className="grid gap-8 md:grid-cols-[14rem_1fr]">
-        <nav className="flex flex-col gap-4">
-          <Button
-            onPress={() => setSelected(undefined)}
-            className={`rounded-md px-3 py-2 text-left text-sm ${selected ? "" : "bg-neutral-900 text-white"}`}
-          >
+        <nav className="flex flex-col gap-1">
+          <Button onPress={() => setEditing(false)} className={tab(!editing)}>
             All apps
           </Button>
-          <ListBox
-            aria-label="Apps you've customised"
-            selectionMode="single"
-            selectedKeys={selected ? [selected] : []}
-            onSelectionChange={(keys) => {
-              const [key] = [...(keys as Set<string>)];
-              setSelected(key);
-            }}
-            renderEmptyState={() => (
-              <p className="text-sm text-neutral-600">No apps customised yet.</p>
-            )}
-            className="flex flex-col gap-1"
-          >
-            {contexts.map((context) => (
-              <ListBoxItem
-                key={context}
-                id={context}
-                className="cursor-pointer rounded-md px-3 py-2 text-sm data-[focus-visible]:outline-2 data-[selected]:bg-neutral-900 data-[selected]:text-white"
-              >
-                {context}
-              </ListBoxItem>
-            ))}
-          </ListBox>
-          <Form
-            className="flex flex-col gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!addingValid) return;
-              setSelected(adding);
-              setAdding("");
-            }}
-          >
-            <TextField
-              value={adding}
-              onChange={setAdding}
-              isInvalid={adding !== "" && !addingValid}
-              className="flex flex-col gap-1"
-            >
-              <Label className="text-sm font-medium">Customise another app</Label>
-              <Input
-                placeholder="social.taproom"
-                className="rounded-md border border-neutral-300 px-3 py-2"
-              />
-              <Text slot="description" className="text-xs text-neutral-600">
-                The app's reversed domain, e.g. social.taproom for taproom.social.
-              </Text>
-              <FieldError className="text-xs text-red-700">
-                Use the app's reversed domain, like social.taproom.
-              </FieldError>
-            </TextField>
-            <Button
-              type="submit"
-              isDisabled={!addingValid}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:opacity-60"
-            >
-              Add
-            </Button>
-          </Form>
+          <Button onPress={() => setEditing(true)} className={tab(editing)}>
+            Shared profile
+          </Button>
         </nav>
 
         <main>
-          {selected && !overrides.isPending && !base.isPending ? (
-            <OverrideEditor
-              key={selected}
+          {profiles.error ? (
+            <p className="text-sm text-red-700">{profiles.error.message}</p>
+          ) : !profiles.data ? (
+            <p className="text-neutral-600">Loading…</p>
+          ) : editing ? (
+            <BaseEditor
               session={session}
               handle={handle.data}
-              context={selected}
-              base={base.data}
-              existing={current?.record}
-              problem={current?.problem}
-              onDeleted={() => setSelected(undefined)}
-            />
-          ) : overrides.data && natives.data && !base.isPending ? (
-            <Overview
-              session={session}
-              model={buildOverview(base.data, overrides.data, natives.data)}
-              onOpen={setSelected}
+              profiles={profiles.data}
+              onDeleted={() => setEditing(false)}
             />
           ) : (
-            <p className="text-neutral-600">Loading…</p>
-          )}
-          {(overrides.error ?? base.error ?? natives.error) && (
-            <p className="text-sm text-red-700">
-              {(overrides.error ?? base.error ?? natives.error)?.message}
-            </p>
+            <Overview
+              session={session}
+              columns={buildOverview(profiles.data)}
+              onEditBase={() => setEditing(true)}
+            />
           )}
         </main>
       </div>

@@ -10,8 +10,8 @@ The Omote profile editor, and a `social.omote.getProfile` XRPC endpoint
 
 Two things on one Cloudflare Worker, with no storage and no secrets:
 
-- **The editor**: static [Astro][astro] pages, with React only for the forms. Sign-in is a public OAuth client that runs entirely in the browser. It asks the account's own server for exactly two things: writing `social.omote.profile` records, and uploading images.
-- **The resolve endpoint**: `GET /xrpc/social.omote.getProfile?actor=…&context=…`, answered by [`@omote-social/profiles`][profiles] on every request. It is open to any origin, and a convenience for prototyping; apps should resolve profiles with the library in production.
+- **The editor**: static [Astro][astro] pages, with React only for the forms. Sign-in is a public OAuth client that runs entirely in the browser. It asks the account's own server for exactly two things: writing the shared base (`social.omote.actor.profile`), and uploading images. Every other app's profile record it only reads.
+- **The resolve endpoint**: `GET /xrpc/social.omote.getProfile?actor=…&collection=…`, answered by [`@omote-social/profiles`][profiles] on every request. It is open to any origin, and a convenience for prototyping; apps should resolve profiles with the library in production.
 
 ## 🔧 Local Development
 
@@ -23,7 +23,7 @@ yarn preview    # the built site and the Worker together, at http://localhost:87
 Sign-in works on `localhost` with no setup: ATProto's OAuth has a development exception for it, so any account can sign in to a local copy. `yarn dev` doesn't run the Worker; use `yarn preview` to try the resolve endpoint:
 
 ```bash
-curl "http://localhost:8787/xrpc/social.omote.getProfile?actor=alice.example.com&context=social.grain"
+curl "http://localhost:8787/xrpc/social.omote.getProfile?actor=alice.example.com&collection=social.grain.actor.profile"
 ```
 
 ## 🚀 Deploying

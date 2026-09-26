@@ -4,19 +4,19 @@
   "defs": {
     "main": {
       "type": "query",
-      "description": "An account's profile as it appears in one context: that context's override merged over the base profile. A convenience for prototyping and for apps that would rather not resolve identities themselves; the `@omote-social/profiles` library does the same work from the records, with no service in between.",
+      "description": "An account's profile as one app shows it: that app's profile record, folded over the records it extends. A convenience for prototyping and for apps that would rather not resolve identities themselves; the `@omote-social/profiles` library does the same work from the records, with no service in between.",
       "parameters": {
         "type": "params",
-        "required": ["actor", "context"],
+        "required": ["actor", "collection"],
         "properties": {
           "actor": {
             "type": "string",
             "format": "at-identifier"
           },
-          "context": {
+          "collection": {
             "type": "string",
-            "description": "The context's NSID authority, e.g. `social.taproom`.",
-            "maxLength": 253
+            "format": "nsid",
+            "description": "The app's profile record collection, e.g. `social.grain.actor.profile`."
           }
         }
       },
@@ -27,15 +27,15 @@
           "ref": "#profileView"
         }
       },
-      "errors": [{ "name": "ActorNotFound" }, { "name": "InvalidContext" }]
+      "errors": [{ "name": "ActorNotFound" }, { "name": "InvalidCollection" }]
     },
     "profileView": {
       "type": "object",
-      "required": ["did", "handle", "context", "sources"],
+      "required": ["did", "handle", "collection", "sources", "chain"],
       "properties": {
         "did": { "type": "string", "format": "did" },
         "handle": { "type": "string", "format": "handle" },
-        "context": { "type": "string" },
+        "collection": { "type": "string", "format": "nsid" },
         "displayName": { "type": "string" },
         "description": { "type": "string" },
         "pronouns": { "type": "string" },
@@ -53,19 +53,39 @@
         "sources": {
           "type": "ref",
           "ref": "#sources"
+        },
+        "chain": {
+          "type": "array",
+          "description": "The records that were read and applied, lowest precedence first. The requested collection is last when its record exists.",
+          "items": { "type": "string", "format": "nsid" }
         }
       }
     },
     "sources": {
       "type": "object",
-      "description": "Where each field came from: `override` (this context), `base` (the base profile) or `hidden` (in the base, hidden here). Fields absent from both are absent here.",
+      "description": "Where each field came from. A field no record in the chain mentions is absent here.",
       "properties": {
-        "displayName": { "type": "string", "knownValues": ["override", "base", "hidden"] },
-        "description": { "type": "string", "knownValues": ["override", "base", "hidden"] },
-        "pronouns": { "type": "string", "knownValues": ["override", "base", "hidden"] },
-        "website": { "type": "string", "knownValues": ["override", "base", "hidden"] },
-        "avatar": { "type": "string", "knownValues": ["override", "base", "hidden"] },
-        "banner": { "type": "string", "knownValues": ["override", "base", "hidden"] }
+        "displayName": { "type": "ref", "ref": "#source" },
+        "description": { "type": "ref", "ref": "#source" },
+        "pronouns": { "type": "ref", "ref": "#source" },
+        "website": { "type": "ref", "ref": "#source" },
+        "avatar": { "type": "ref", "ref": "#source" },
+        "banner": { "type": "ref", "ref": "#source" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["collection"],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "format": "nsid",
+          "description": "The record the value came from, or, when `hidden`, the record whose `null` removed it."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "True when a record set the field to `null` over a value one of its bases had, so the app shows nothing."
+        }
       }
     }
   }

@@ -1,0 +1,62 @@
+{
+  "lexicon": 1,
+  "id": "social.omote.actor.profile",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:self",
+      "description": "A profile that belongs to the account holder rather than to any app: the shared base other profile records name in `extends`. Also the template for apps adopting the pattern: copy it into your own namespace, change `id`, adjust the limits and add your own fields. Records take part in inheritance by these fields' names and types, not by referencing this lexicon. Public, like the rest of the repository.",
+      "record": {
+        "type": "object",
+        "nullable": ["displayName", "description", "pronouns", "website", "avatar", "banner"],
+        "properties": {
+          "extends": {
+            "type": "array",
+            "description": "The profile records this one builds on, each the `self` record of the named collection in this repository. Later entries win over earlier ones, and this record's own fields win over all of them. Absent or empty: this record inherits nothing.",
+            "maxLength": 8,
+            "items": {
+              "type": "string",
+              "format": "nsid"
+            }
+          },
+          "displayName": {
+            "type": "string",
+            "description": "`null` hides the name the bases give.",
+            "maxGraphemes": 64,
+            "maxLength": 640
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-form profile text. `null` hides what the bases say.",
+            "maxGraphemes": 256,
+            "maxLength": 2560
+          },
+          "pronouns": {
+            "type": "string",
+            "maxGraphemes": 20,
+            "maxLength": 200
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "avatar": {
+            "type": "blob",
+            "description": "Animated formats (GIF, WebP, AVIF) are allowed; whether to animate them is each app's choice.",
+            "accept": ["image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"],
+            "maxSize": 10000000
+          },
+          "banner": {
+            "type": "blob",
+            "accept": ["image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"],
+            "maxSize": 10000000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

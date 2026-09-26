@@ -1,7 +1,7 @@
 {
   "name": "@omote-social/lexicon",
   "version": "0.0.0",
-  "description": "The social.omote lexicons for per-app ATProto profiles, and their Valibot schemas.",
+  "description": "The social.omote lexicons for ATProto profiles that extend, and their Valibot schemas.",
   "keywords": [
     "atproto",
     "bluesky",
@@ -51,6 +51,7 @@
     "build": "vp pack"
   },
   "dependencies": {
+    "@atcute/lexicons": "catalog:",
     "valibot": "catalog:"
   },
   "engines": {

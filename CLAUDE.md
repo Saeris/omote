@@ -69,19 +69,21 @@ Default to surfacing uncertainty, not hiding it.
 
 # Project: omote (per-app profiles for ATProto)
 
-- **What it is:** one ATProto identity, presented differently per app. A sparse
-  `social.omote.profile` record per context (rkey = the app's NSID authority,
-  e.g. `social.taproom`) overrides the base profile (`app.bsky.actor.profile`),
-  and `hide` removes inherited fields. Design notes: `docs/extensions.md` (app-specific extensions) and, in the taproom.social
+- **What it is:** one ATProto identity, presented differently per app. Each
+  app's own profile record may name the records it builds on in an `extends`
+  array, resolved like tsconfig's: later bases win, the record's own fields win,
+  absent inherits, `null` hides. Records take part structurally (Bluesky's field
+  names and types), never by referencing our lexicon. `social.omote.actor.profile`
+  is the shared base and the template. The spec is `docs/spec.md`. Design notes: `docs/extensions.md` (app-specific extensions) and, in the taproom.social
   repo, `plan/taproom/24-per-app-profiles.md`.
-- **Say what it is not:** these records are public. Overrides separate
+- **Say what it is not:** these records are public. Per-app profiles separate
   presentations; they do not make them unlinkable. Never describe them as
   anonymity.
 - **Layout** mirrors keytrace (github.com/orta/keytrace):
   - `packages/lexicon`: the lexicon JSON and its Valibot twins, held together by
     `lexicon-parity.test.ts`.
-  - `packages/profiles`: `getProfile(actor, context)` and the pure
-    `mergeProfile`. This is the production path: apps resolve profiles from the
+  - `packages/profiles`: `getProfile(actor, collection)` and the pure
+    `resolveProfile`. This is the production path: apps resolve profiles from the
     records themselves.
   - `apps/omote.social`: the editor (Astro, with React only for forms) plus a
     Worker serving `social.omote.getProfile` over XRPC, for prototyping and

@@ -4,57 +4,67 @@ import { describe, expect, it } from "vitest";
 import {
   FIELDS,
   IMAGE_TYPES,
+  MAX_EXTENDS,
   MAX_IMAGE_BYTES,
-  NSID_PROFILE,
-  contextSchema,
-  profileOverrideSchema,
+  NSID_BASE_PROFILE,
+  baseProfileSchema,
 } from "./index";
 
 /**
  * The JSON lexicon is what every other app and PDS reads; the Valibot schema is what our code enforces. If they disagree, we accept records the network rejects, or reject ones it accepts. These tests pin the limits that matter.
  */
 
+interface Property {
+  type: string;
+  maxGraphemes?: number;
+  maxLength?: number;
+  accept?: string[];
+  maxSize?: number;
+  items?: { type: string; format?: string };
+}
+
 const lexicon = JSON.parse(
-  readFileSync(new URL("../lexicons/social/omote/profile.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../lexicons/social/omote/actor/profile.json", import.meta.url), "utf8"),
 ) as {
   id: string;
   defs: {
     main: {
       key: string;
-      record: {
-        required: string[];
-        properties: Record<
-          string,
-          {
-            maxGraphemes?: number;
-            maxLength?: number;
-            accept?: string[];
-            maxSize?: number;
-            items?: { knownValues?: string[] };
-          }
-        >;
-      };
+      record: { required?: string[]; nullable: string[]; properties: Record<string, Property> };
     };
   };
 };
-const properties = lexicon.defs.main.record.properties;
+const { record: schema } = lexicon.defs.main;
+const properties = schema.properties;
 
-const record = (overrides: Record<string, unknown>) => ({
-  createdAt: "2026-09-26T00:00:00.000Z",
-  ...overrides,
-});
-const accepts = (value: unknown) => v.safeParse(profileOverrideSchema, value).success;
+const accepts = (value: unknown) => v.safeParse(baseProfileSchema, value).success;
 
-describe("the profile lexicon and its schema", () => {
+describe("the shared base's lexicon and its schema", () => {
   it("share an NSID", () => {
-    expect(lexicon.id).toBe(NSID_PROFILE);
+    expect(lexicon.id).toBe(NSID_BASE_PROFILE);
   });
 
-  it("agree on which fields exist, so hide can name every one", () => {
-    const declared = Object.keys(properties).filter((key) => !["hide", "createdAt"].includes(key));
+  it("key the record self, since extends finds a base by its collection's self record", () => {
+    expect(lexicon.defs.main.key).toBe("literal:self");
+  });
 
-    expect(declared).toEqual([...FIELDS]);
-    expect(properties.hide?.items?.knownValues).toEqual([...FIELDS]);
+  it("declare exactly the shared fields, plus extends and createdAt", () => {
+    expect(Object.keys(properties).sort()).toEqual([...FIELDS, "extends", "createdAt"].sort());
+  });
+
+  it("let every shared field be hidden, and none be required, as a Partial of the shared type", () => {
+    expect(schema.nullable).toEqual([...FIELDS]);
+    expect(schema.required ?? []).toEqual([]);
+    expect(accepts({})).toBe(true);
+    for (const field of FIELDS) {
+      expect(accepts({ [field]: null })).toBe(true);
+    }
+  });
+
+  it("keep Bluesky's text limits, since Bluesky's profile is the template", () => {
+    expect(properties.displayName?.maxGraphemes).toBe(64);
+    expect(properties.description?.maxGraphemes).toBe(256);
+    expect(properties.pronouns?.maxGraphemes).toBe(20);
   });
 
   it.each([
@@ -62,38 +72,59 @@ describe("the profile lexicon and its schema", () => {
     ["description", 256],
     ["pronouns", 20],
   ] as const)("agree on how long %s may be", (field, graphemes) => {
-    expect(properties[field]?.maxGraphemes).toBe(graphemes);
-    expect(accepts(record({ [field]: "x".repeat(graphemes) }))).toBe(true);
-    expect(accepts(record({ [field]: "x".repeat(graphemes + 1) }))).toBe(false);
+    expect(accepts({ [field]: "x".repeat(graphemes) })).toBe(true);
+    expect(accepts({ [field]: "x".repeat(graphemes + 1) })).toBe(false);
   });
 
   it("count graphemes, not code units, so an emoji name is not cut short", () => {
-    expect(accepts(record({ pronouns: "🏳️‍⚧️".repeat(20) }))).toBe(true);
-  });
-
-  it("require only createdAt: an override is sparse by design", () => {
-    expect(lexicon.defs.main.record.required).toEqual(["createdAt"]);
-    expect(accepts(record({}))).toBe(true);
+    expect(accepts({ pronouns: "🏳️‍⚧️".repeat(20) })).toBe(true);
   });
 });
 
-describe("a context", () => {
-  it("is an app's reversed domain, which is also a valid record key", () => {
-    expect(lexicon.defs.main.key).toBe("any");
-    expect(v.is(contextSchema, "social.taproom")).toBe(true);
-    expect(v.is(contextSchema, "place.stream")).toBe(true);
+describe("extends", () => {
+  it("is an array of NSIDs from the start, since changing a string to an array later breaks every reader", () => {
+    expect(properties.extends).toMatchObject({
+      type: "array",
+      maxLength: MAX_EXTENDS,
+      items: { type: "string", format: "nsid" },
+    });
   });
 
-  it("rejects what is not a reversed domain, so one app cannot be spelled two ways", () => {
-    for (const value of [
-      "taproom",
-      "Social.Taproom",
-      "social..taproom",
-      "https://taproom.social",
-      "social.taproom/",
-    ]) {
-      expect(v.is(contextSchema, value)).toBe(false);
-    }
+  it("names collections, not records or URLs, so a profile only ever inherits from its own account", () => {
+    expect(accepts({ extends: ["app.bsky.actor.profile"] })).toBe(true);
+    expect(accepts({ extends: ["at://did:plc:abc/app.bsky.actor.profile/self"] })).toBe(false);
+    expect(accepts({ extends: ["https://bsky.app"] })).toBe(false);
+  });
+
+  it("is bounded, so a record cannot make every reader fetch without end", () => {
+    const many = Array.from({ length: MAX_EXTENDS + 1 }, (_, i) => `com.example${i}.profile`);
+
+    expect(accepts({ extends: many.slice(0, MAX_EXTENDS) })).toBe(true);
+    expect(accepts({ extends: many })).toBe(false);
+  });
+});
+
+describe("the template", () => {
+  it("accepts a Bluesky profile as it is, since the shapes are the same", () => {
+    // Shaped like a real app.bsky.actor.profile record, including fields only Bluesky uses.
+    const bluesky = {
+      $type: "app.bsky.actor.profile",
+      displayName: "Alice Mori",
+      description: "Posting about lagers.",
+      avatar: {
+        $type: "blob",
+        ref: { $link: "bafkreibme22gw2h7y2h7tg2fhqotaqjucnbc24deqo72b6mkl2egezxhvy" },
+        mimeType: "image/jpeg",
+        size: 91_234,
+      },
+      pinnedPost: { uri: "at://did:plc:alice/app.bsky.feed.post/3k", cid: "bafyrei" },
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+
+    const parsed = v.parse(baseProfileSchema, bluesky);
+
+    // And keeps what it doesn't know, so reading and writing back loses nothing.
+    expect(parsed).toMatchObject({ pinnedPost: bluesky.pinnedPost });
   });
 });
 
@@ -109,7 +140,7 @@ describe("an image in a record", () => {
       original: { $type: "blob", ref: { $link: link }, mimeType: "image/png", size: 2799 },
     };
 
-    const parsed = v.parse(profileOverrideSchema, record({ avatar: fromListRecords }));
+    const parsed = v.parse(baseProfileSchema, { avatar: fromListRecords });
 
     expect(parsed.avatar).toEqual({
       $type: "blob",
@@ -139,12 +170,12 @@ describe("images", () => {
 
   it("accepts WebP and animated formats, which people use for avatars everywhere else", () => {
     for (const type of ["image/webp", "image/gif", "image/avif"]) {
-      expect(accepts(record({ avatar: image(type) }))).toBe(true);
+      expect(accepts({ avatar: image(type) })).toBe(true);
     }
   });
 
   it("refuses what is not an image, or is larger than the ceiling", () => {
-    expect(accepts(record({ avatar: image("video/mp4") }))).toBe(false);
-    expect(accepts(record({ banner: image("image/png", MAX_IMAGE_BYTES + 1) }))).toBe(false);
+    expect(accepts({ avatar: image("video/mp4") })).toBe(false);
+    expect(accepts({ banner: image("image/png", MAX_IMAGE_BYTES + 1) })).toBe(false);
   });
 });

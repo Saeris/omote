@@ -1,9 +1,9 @@
 import {
   FIELDS,
-  NSID_PROFILE,
+  NSID_BASE_PROFILE,
+  NSID_BSKY_PROFILE,
   type Blob,
   type Field,
-  type ProfileOverride,
 } from "@omote-social/lexicon";
 import * as v from "valibot";
 
@@ -15,7 +15,7 @@ const text = (graphemes: number, label: string) =>
   v.pipe(v.string(), v.maxGraphemes(graphemes, `${label} can be at most ${graphemes} characters`));
 
 /**
- * The form. Every text field allows empty, which means "use my base profile here", not "show nothing": hiding is its own control.
+ * The form. Every text field allows empty, which means "inherit", not "show nothing": hiding is its own control, written as `null`.
  */
 export const formSchema = v.object({
   displayName: text(64, "A name"),
@@ -26,46 +26,67 @@ export const formSchema = v.object({
     v.pipe(v.string(), v.url("A website must be a full URL, like https://example.com")),
   ]),
   hide: v.array(v.picklist(FIELDS)),
+  /** Whether `extends` names Bluesky's profile. */
+  fromBluesky: v.boolean(),
 });
 
 export type FormValues = v.InferOutput<typeof formSchema>;
 export type Images = Partial<Record<"avatar" | "banner", Blob>>;
 
-/** A record as the form shows it: empty where the record is silent. */
-export const toForm = (record: ProfileOverride | undefined): FormValues => ({
-  displayName: record?.displayName ?? "",
-  description: record?.description ?? "",
-  pronouns: record?.pronouns ?? "",
-  website: record?.website ?? "",
-  hide: (record?.hide ?? []).filter((field): field is Field =>
-    (FIELDS as readonly string[]).includes(field),
-  ),
-});
+const basesOf = (record: Record<string, unknown> | undefined): string[] =>
+  Array.isArray(record?.extends)
+    ? record.extends.filter((entry): entry is string => typeof entry === "string")
+    : [];
+
+/** A record as the form shows it: empty where the record is silent, hidden where it says `null`. */
+export const toForm = (record: Record<string, unknown> | undefined): FormValues => {
+  const textOf = (field: TextField) =>
+    typeof record?.[field] === "string" ? (record[field] as string) : "";
+
+  return {
+    displayName: textOf("displayName"),
+    description: textOf("description"),
+    pronouns: textOf("pronouns"),
+    website: textOf("website"),
+    hide: FIELDS.filter((field) => record?.[field] === null),
+    // A new shared base starts from Bluesky: it is where most people's profile is today.
+    fromBluesky: record === undefined || basesOf(record).includes(NSID_BSKY_PROFILE),
+  };
+};
 
 /**
- * The record to write. Blank fields are left out rather than written empty, so they fall back to the base profile: an override records only what differs.
+ * The record to write.
  *
- * `createdAt` is kept from the record being edited, so it means when this context's profile was made.
+ * - **Blank is left out**, so the field is inherited.
+ * - **Hidden is `null`**, so what the bases say doesn't show.
+ * - **Everything else in the existing record is kept**, its other bases included: other apps and newer versions of omote write this record too.
  */
 export const toRecord = (
   values: FormValues,
   images: Images,
-  existing: ProfileOverride | undefined,
+  existing: Record<string, unknown> | undefined,
   now: () => string = () => new Date().toISOString(),
-): ProfileOverride & { $type: typeof NSID_PROFILE } => {
-  const record: Record<string, unknown> = { $type: NSID_PROFILE };
+): Record<string, unknown> => {
+  const record: Record<string, unknown> = { ...existing, $type: NSID_BASE_PROFILE };
+  for (const field of FIELDS) delete record[field];
 
+  const hidden = new Set<Field>(values.hide);
   for (const field of TEXT_FIELDS) {
     const value = values[field].trim();
-    if (value !== "") {
-      record[field] = value;
-    }
+    if (hidden.has(field)) record[field] = null;
+    else if (value !== "") record[field] = value;
+  }
+  for (const field of ["avatar", "banner"] as const) {
+    if (hidden.has(field)) record[field] = null;
+    else if (images[field]) record[field] = images[field];
   }
 
-  if (images.avatar) record.avatar = images.avatar;
-  if (images.banner) record.banner = images.banner;
-  if (values.hide.length > 0) record.hide = values.hide;
+  const others = basesOf(existing).filter((base) => base !== NSID_BSKY_PROFILE);
+  const bases = values.fromBluesky ? [NSID_BSKY_PROFILE, ...others] : others;
+  if (bases.length > 0) record.extends = bases;
+  else delete record.extends;
+
   record.createdAt = existing?.createdAt ?? now();
 
-  return record as ProfileOverride & { $type: typeof NSID_PROFILE };
+  return record;
 };
