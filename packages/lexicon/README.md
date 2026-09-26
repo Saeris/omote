@@ -29,7 +29,7 @@ The JSON lexicons ship with the package, under `@omote-social/lexicon/lexicons/s
 
 ### `social.omote.profile`
 
-A record describing how the account holder appears in **one context**. The record key names the context: an app, by the reversed domain its own lexicons live under (e.g. `social.taproom` for taproom.social). The record is sparse: a field it leaves out falls back to the account's base profile (`app.bsky.actor.profile`).
+A record describing how the account holder appears in **one context**. The record key names the context: an app, by the reversed domain its own lexicons live under (e.g. `social.grain` for [Grain][grain], the photo-sharing app). The record is sparse: a field it leaves out falls back to the account's base profile (`app.bsky.actor.profile`).
 
 | Field         | Type       | Limits                              | Notes                                                                                   |
 | ------------- | ---------- | ----------------------------------- | --------------------------------------------------------------------------------------- |
@@ -58,8 +58,8 @@ import { NSID_PROFILE, contextSchema, profileOverrideSchema } from "@omote-socia
 const override = v.parse(profileOverrideSchema, record.value);
 
 // Is this a valid context (and so a valid record key)?
-v.is(contextSchema, "social.taproom"); // true
-v.is(contextSchema, "taproom"); // false
+v.is(contextSchema, "social.grain"); // true
+v.is(contextSchema, "grain"); // false
 ```
 
 ### Exports
@@ -86,6 +86,7 @@ Released under the [MIT license][license] © [Drake Costa][personal-website].
 [ci]: https://github.com/Saeris/omote/actions/workflows/ci.yml
 [lexicon]: https://atproto.com/specs/lexicon
 [valibot]: https://valibot.dev
+[grain]: https://grain.social
 [profiles]: ../profiles
 [license]: ../../LICENSE
 [personal-website]: https://saeris.gg

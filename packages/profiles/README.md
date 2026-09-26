@@ -30,7 +30,7 @@ Pass an account (handle or DID) and your app's context, its reversed domain:
 ```ts
 import { getProfile } from "@omote-social/profiles";
 
-const profile = await getProfile("alice.example.com", "social.taproom");
+const profile = await getProfile("alice.example.com", "social.grain");
 
 profile.displayName ?? `@${profile.handle}`; // show the handle when there's no name
 profile.avatar; // a URL served by the account's own PDS

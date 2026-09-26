@@ -23,7 +23,7 @@ yarn preview    # the built site and the Worker together, at http://localhost:87
 Sign-in works on `localhost` with no setup: ATProto's OAuth has a development exception for it, so any account can sign in to a local copy. `yarn dev` doesn't run the Worker; use `yarn preview` to try the resolve endpoint:
 
 ```bash
-curl "http://localhost:8787/xrpc/social.omote.getProfile?actor=alice.example.com&context=social.taproom"
+curl "http://localhost:8787/xrpc/social.omote.getProfile?actor=alice.example.com&context=social.grain"
 ```
 
 ## 🚀 Deploying

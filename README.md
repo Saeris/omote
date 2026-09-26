@@ -14,11 +14,11 @@ Per-app profiles for [ATProto][atproto]: one identity, and the face you choose t
 
 In Noh theatre, the masks the performers wear are called _omote_ (表), "the face". One performer takes up a different mask for each role, and the audience still knows who is underneath.
 
-Your ATProto account works the same way. It is one identity, and its handle signs you in to any app in the Atmosphere. But the profile you'd show your bar's team, your photography followers or a game's lobby need not be the same one. Omote lets you set how you appear in each app. Anything you don't set falls back to your base profile.
+Your ATProto account works the same way. It is one identity, and its handle signs you in to any app in the Atmosphere. But the profile you'd show your company's team, your photography followers or a game's lobby need not be the same one. Omote lets you set how you appear in each app. Anything you don't set falls back to your base profile.
 
 ## 🔧 How It Works
 
-Your base profile is your `app.bsky.actor.profile`, if you have one. For any app, you can add a `social.omote.profile` record, keyed by that app's reversed domain (`social.taproom` for taproom.social), that:
+Your base profile is your `app.bsky.actor.profile`, if you have one. For any app, you can add a `social.omote.profile` record, keyed by that app's reversed domain (`social.grain` for [Grain][grain], the photo-sharing app), that:
 
 - **overrides** only what should differ there: display name, bio, pronouns, website, avatar or banner;
 - **hides** base fields you'd rather not show there.
@@ -28,7 +28,7 @@ An app that supports Omote resolves your profile straight from your PDS, with no
 ```ts
 import { getProfile } from "@omote-social/profiles";
 
-const profile = await getProfile("alice.example.com", "social.taproom");
+const profile = await getProfile("alice.example.com", "social.grain");
 // { did, handle, context, displayName?, description?, pronouns?, website?, avatar?, banner?, sources }
 ```
 
@@ -73,6 +73,7 @@ Released under the [MIT license][license] © [Drake Costa][personal-website].
 [profiles_badge]: https://img.shields.io/npm/v/@omote-social/profiles.svg?style=flat&label=profiles
 [profiles_npm]: https://www.npmjs.com/package/@omote-social/profiles
 [atproto]: https://atproto.com
+[grain]: https://grain.social
 [valibot]: https://valibot.dev
 [viteplus]: https://viteplus.dev/
 [bumpy]: https://bumpy.varlock.dev/
