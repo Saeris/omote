@@ -15,7 +15,9 @@ import {
 } from "react-aria-components";
 import * as v from "valibot";
 import { beginSignIn, currentSession, type Session } from "../auth";
-import { getBase, listOverrides } from "./api";
+import { getBase, listNativeProfiles, listOverrides } from "./api";
+import { Overview } from "./Overview";
+import { buildOverview } from "./overview-model";
 import { OverrideEditor } from "./OverrideEditor";
 
 const queryClient = new QueryClient();
@@ -87,6 +89,10 @@ const Workspace = ({ session }: { readonly session: Session }) => {
     queryKey: ["overrides", session.did],
     queryFn: () => listOverrides(session),
   });
+  const natives = useQuery({
+    queryKey: ["natives", session.did],
+    queryFn: () => listNativeProfiles(session),
+  });
   const [selected, setSelected] = useState<string>();
   const [adding, setAdding] = useState("");
   const addingValid = v.safeParse(contextSchema, adding).success;
@@ -122,6 +128,12 @@ const Workspace = ({ session }: { readonly session: Session }) => {
 
       <div className="grid gap-8 md:grid-cols-[14rem_1fr]">
         <nav className="flex flex-col gap-4">
+          <Button
+            onPress={() => setSelected(undefined)}
+            className={`rounded-md px-3 py-2 text-left text-sm ${selected ? "" : "bg-neutral-900 text-white"}`}
+          >
+            All apps
+          </Button>
           <ListBox
             aria-label="Apps you've customised"
             selectionMode="single"
@@ -194,11 +206,19 @@ const Workspace = ({ session }: { readonly session: Session }) => {
               problem={current?.problem}
               onDeleted={() => setSelected(undefined)}
             />
+          ) : overrides.data && natives.data && !base.isPending ? (
+            <Overview
+              session={session}
+              model={buildOverview(base.data, overrides.data, natives.data)}
+              onOpen={setSelected}
+            />
           ) : (
-            <p className="text-neutral-600">Pick an app to change how you appear there.</p>
+            <p className="text-neutral-600">Loading…</p>
           )}
-          {(overrides.error ?? base.error) && (
-            <p className="text-sm text-red-700">{(overrides.error ?? base.error)?.message}</p>
+          {(overrides.error ?? base.error ?? natives.error) && (
+            <p className="text-sm text-red-700">
+              {(overrides.error ?? base.error ?? natives.error)?.message}
+            </p>
           )}
         </main>
       </div>

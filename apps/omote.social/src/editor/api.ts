@@ -13,6 +13,7 @@ import {
 } from "@omote-social/lexicon";
 import * as v from "valibot";
 import type { Session } from "../auth";
+import { contextOf, isNativeProfile, readNativeFields, type NativeProfile } from "./native";
 
 /**
  * The editor's reads and writes, all against the signed-in account's own PDS.
@@ -121,3 +122,30 @@ export const uploadImage = async (session: Session, file: File): Promise<Blob> =
 };
 
 export type { Did };
+
+/**
+ * Other apps' own profile records in this account: read-only, so the overview can show what each app is using.
+ *
+ * A collection's first record stands for it: these are `self` singletons in every app seen so far.
+ */
+export const listNativeProfiles = async (session: Session): Promise<NativeProfile[]> => {
+  const described = await session.rpc.get("com.atproto.repo.describeRepo", {
+    params: { repo: session.did },
+  });
+  if (!described.ok) throw failure("Could not list your records", described.data);
+
+  const collections = described.data.collections.filter(isNativeProfile);
+  const profiles = await Promise.all(
+    collections.map(async (collection): Promise<NativeProfile | undefined> => {
+      const response = await session.rpc.get("com.atproto.repo.listRecords", {
+        params: { repo: session.did, collection: collection as never, limit: 1 },
+      });
+      const first = response.ok ? response.data.records[0] : undefined;
+      return first
+        ? { context: contextOf(collection), collection, fields: readNativeFields(first.value) }
+        : undefined;
+    }),
+  );
+
+  return profiles.filter((profile): profile is NativeProfile => profile !== undefined);
+};

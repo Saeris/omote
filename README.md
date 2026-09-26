@@ -56,7 +56,7 @@ vp test              # run Vitest
 yarn bumpy add       # create a bump file for your PR
 ```
 
-Design notes for layering app-specific customisation (decorations, name styles, widgets) on top of the base profile live in [`docs/extensions.md`](./docs/extensions.md).
+The baseline, including the resolution rules every implementation must match and the choices still open, is drafted in [`docs/spec.md`](./docs/spec.md). Design notes for layering app-specific customisation (decorations, name styles, widgets) on top of the base profile live in [`docs/extensions.md`](./docs/extensions.md).
 
 ## 📣 Acknowledgements
 
