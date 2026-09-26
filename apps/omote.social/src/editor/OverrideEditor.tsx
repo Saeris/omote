@@ -1,5 +1,11 @@
 import { valibotResolver } from "@hookform/resolvers/valibot";
-import { FIELDS, type BaseProfile, type Blob, type ProfileOverride } from "@omote/lexicon";
+import {
+  FIELDS,
+  IMAGE_TYPES,
+  type BaseProfile,
+  type Blob,
+  type ProfileOverride,
+} from "@omote-social/lexicon";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button, Checkbox, CheckboxGroup, FileTrigger, Form, Label } from "react-aria-components";
@@ -96,7 +102,7 @@ export const OverrideEditor = ({
           {(["avatar", "banner"] as const).map((field) => (
             <div key={field} className="flex items-center gap-2">
               <FileTrigger
-                acceptedFileTypes={["image/png", "image/jpeg"]}
+                acceptedFileTypes={[...IMAGE_TYPES]}
                 onSelect={(files) => {
                   const file = files?.[0];
                   if (file) upload.mutate({ field, file });

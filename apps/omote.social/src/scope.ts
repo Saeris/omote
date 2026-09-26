@@ -1,4 +1,4 @@
-import { NSID_PROFILE } from "@omote/lexicon";
+import { NSID_PROFILE } from "@omote-social/lexicon";
 
 /**
  * What the editor asks for: its own records and images for them, nothing else.

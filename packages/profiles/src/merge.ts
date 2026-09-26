@@ -5,7 +5,7 @@ import {
   type Field,
   type ProfileOverride,
   type Source,
-} from "@omote/lexicon";
+} from "@omote-social/lexicon";
 
 /** A field's value before blobs become URLs. */
 type Value = string | Blob;

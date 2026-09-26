@@ -1,4 +1,4 @@
-import { DID, HANDLE, bsky, override, reset, server, state } from "@omote/profiles/testing";
+import { DID, HANDLE, bsky, override, reset, server, state } from "@omote-social/profiles/testing";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import worker from "./index";
 

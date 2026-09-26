@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
-import { FIELDS, NSID_PROFILE, contextSchema, profileOverrideSchema } from "./index";
+import {
+  FIELDS,
+  IMAGE_TYPES,
+  MAX_IMAGE_BYTES,
+  NSID_PROFILE,
+  contextSchema,
+  profileOverrideSchema,
+} from "./index";
 
 /**
  * The JSON lexicon is what every other app and PDS reads; the Valibot schema is what our code enforces. If they disagree, we accept records the network rejects, or reject ones it accepts. These tests pin the limits that matter.
@@ -18,7 +25,13 @@ const lexicon = JSON.parse(
         required: string[];
         properties: Record<
           string,
-          { maxGraphemes?: number; maxLength?: number; items?: { knownValues?: string[] } }
+          {
+            maxGraphemes?: number;
+            maxLength?: number;
+            accept?: string[];
+            maxSize?: number;
+            items?: { knownValues?: string[] };
+          }
         >;
       };
     };
@@ -104,5 +117,34 @@ describe("an image in a record", () => {
       mimeType: "image/png",
       size: 2799,
     });
+  });
+});
+
+describe("images", () => {
+  const link = "bafkreibq2jwzpz3nqshkomrrqdrdced6mt73dmupg2qjf4iybntn7s5p2m";
+  const image = (mimeType: string, size = 1000) => ({
+    $type: "blob",
+    ref: { $link: link },
+    mimeType,
+    size,
+  });
+
+  it.each(["avatar", "banner"])(
+    "agree on what a %s may be, matching Discord's formats and ceiling",
+    (field) => {
+      expect(properties[field]?.accept).toEqual([...IMAGE_TYPES]);
+      expect(properties[field]?.maxSize).toBe(MAX_IMAGE_BYTES);
+    },
+  );
+
+  it("accepts WebP and animated formats, which people use for avatars everywhere else", () => {
+    for (const type of ["image/webp", "image/gif", "image/avif"]) {
+      expect(accepts(record({ avatar: image(type) }))).toBe(true);
+    }
+  });
+
+  it("refuses what is not an image, or is larger than the ceiling", () => {
+    expect(accepts(record({ avatar: image("video/mp4") }))).toBe(false);
+    expect(accepts(record({ banner: image("image/png", MAX_IMAGE_BYTES + 1) }))).toBe(false);
   });
 });

@@ -72,7 +72,7 @@ Default to surfacing uncertainty, not hiding it.
 - **What it is:** one ATProto identity, presented differently per app. A sparse
   `social.omote.profile` record per context (rkey = the app's NSID authority,
   e.g. `social.taproom`) overrides the base profile (`app.bsky.actor.profile`),
-  and `hide` removes inherited fields. Design notes live in the taproom.social
+  and `hide` removes inherited fields. Design notes: `docs/extensions.md` (app-specific extensions) and, in the taproom.social
   repo, `plan/taproom/24-per-app-profiles.md`.
 - **Say what it is not:** these records are public. Overrides separate
   presentations; they do not make them unlinkable. Never describe them as

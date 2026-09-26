@@ -1,4 +1,10 @@
-import { FIELDS, NSID_PROFILE, type Blob, type Field, type ProfileOverride } from "@omote/lexicon";
+import {
+  FIELDS,
+  NSID_PROFILE,
+  type Blob,
+  type Field,
+  type ProfileOverride,
+} from "@omote-social/lexicon";
 import * as v from "valibot";
 
 /** The text fields a person edits. Images are uploaded separately and carried as blob references. */

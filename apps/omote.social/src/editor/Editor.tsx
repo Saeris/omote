@@ -1,5 +1,5 @@
-import { contextSchema } from "@omote/lexicon";
-import { defaultResolver } from "@omote/profiles";
+import { contextSchema } from "@omote-social/lexicon";
+import { defaultResolver } from "@omote-social/profiles";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {

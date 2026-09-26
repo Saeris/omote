@@ -1,5 +1,5 @@
 {
-  "name": "@omote/lexicon",
+  "name": "@omote-social/lexicon",
   "version": "0.0.0",
   "private": true,
   "description": "The social.omote lexicons, and their Valibot schemas.",

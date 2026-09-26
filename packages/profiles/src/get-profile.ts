@@ -19,7 +19,7 @@ import {
   profileOverrideSchema,
   type Blob,
   type ProfileView,
-} from "@omote/lexicon";
+} from "@omote-social/lexicon";
 import * as v from "valibot";
 import { mergeProfile } from "./merge";
 

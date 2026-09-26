@@ -8,4 +8,4 @@ export { blobUrl, defaultResolver, getProfile, ProfileError } from "./get-profil
 export type { GetProfileOptions, ProfileErrorCode } from "./get-profile";
 export { mergeProfile } from "./merge";
 export type { Merged } from "./merge";
-export type { ProfileView, Source, Field } from "@omote/lexicon";
+export type { ProfileView, Source, Field } from "@omote-social/lexicon";

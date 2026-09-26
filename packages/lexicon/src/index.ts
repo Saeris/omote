@@ -62,14 +62,31 @@ export const blobSchema = v.pipe(
 
 export type Blob = v.InferOutput<typeof blobSchema>;
 
-const IMAGE_TYPES = ["image/png", "image/jpeg"];
-/** 1 MB, the same ceiling as a Bluesky avatar. */
-export const MAX_IMAGE_BYTES = 1_000_000;
+/**
+ * The image types Discord accepts for avatars and banners. Animated GIF, WebP and AVIF are allowed; whether to animate is each app's choice.
+ *
+ * Wider than Bluesky's PNG/JPEG on purpose: nothing in the protocol limits a blob's type, and bsky.social and Cirrus both accept these.
+ */
+export const IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+] as const;
+
+/**
+ * 10 MB, Discord's ceiling. bsky.social and Cirrus accept far more; a self-hosted reference PDS refuses over 5 MB unless configured otherwise, so an upload can still be refused by the person's own server.
+ */
+export const MAX_IMAGE_BYTES = 10_000_000;
 
 const imageSchema = v.pipe(
   blobSchema,
-  v.check((blob) => IMAGE_TYPES.includes(blob.mimeType), "Images must be PNG or JPEG"),
-  v.check((blob) => blob.size <= MAX_IMAGE_BYTES, "Images must be 1 MB or smaller"),
+  v.check(
+    (blob) => (IMAGE_TYPES as readonly string[]).includes(blob.mimeType),
+    "Images must be PNG, JPEG, GIF, WebP or AVIF",
+  ),
+  v.check((blob) => blob.size <= MAX_IMAGE_BYTES, "Images must be 10 MB or smaller"),
 );
 
 const text = (graphemes: number, length: number) =>

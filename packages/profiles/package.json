@@ -1,5 +1,5 @@
 {
-  "name": "@omote/profiles",
+  "name": "@omote-social/profiles",
   "version": "0.0.0",
   "private": true,
   "description": "Resolve how an ATProto account appears in one app: a per-app override over the base profile. Works in browsers, Node and Workers.",
@@ -20,7 +20,7 @@
     "@atcute/client": "catalog:",
     "@atcute/identity-resolver": "catalog:",
     "@atcute/lexicons": "catalog:",
-    "@omote/lexicon": "workspace:*",
+    "@omote-social/lexicon": "workspace:*",
     "valibot": "catalog:"
   },
   "devDependencies": {

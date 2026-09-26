@@ -3,7 +3,7 @@
  *
  * A public OAuth client: no server of ours holds tokens or secrets, so the whole editor is static files. The cost is shorter sessions (public clients' refresh tokens last two weeks at most), which suits something people open occasionally to change a profile.
  *
- * Handles resolve with `@omote/profiles`' own resolver (DNS-over-HTTPS, then `.well-known`), so signing in sends nobody's handle to Bluesky or to us.
+ * Handles resolve with `@omote-social/profiles`' own resolver (DNS-over-HTTPS, then `.well-known`), so signing in sends nobody's handle to Bluesky or to us.
  */
 
 import { Client } from "@atcute/client";
@@ -16,7 +16,7 @@ import {
   finalizeAuthorization,
   getSession,
 } from "@atcute/oauth-browser-client";
-import { defaultResolver } from "@omote/profiles";
+import { defaultResolver } from "@omote-social/profiles";
 import { SCOPE } from "./scope";
 
 export interface Session {

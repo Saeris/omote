@@ -1644,17 +1644,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@omote/lexicon@workspace:*, @omote/lexicon@workspace:packages/lexicon":
+"@omote-social/lexicon@workspace:*, @omote-social/lexicon@workspace:packages/lexicon":
   version: 0.0.0-use.local
-  resolution: "@omote/lexicon@workspace:packages/lexicon"
+  resolution: "@omote-social/lexicon@workspace:packages/lexicon"
   dependencies:
     valibot: "catalog:"
   languageName: unknown
   linkType: soft
 
-"@omote/omote.social@workspace:.":
+"@omote-social/omote.social@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@omote/omote.social@workspace:."
+  resolution: "@omote-social/omote.social@workspace:."
   dependencies:
     "@types/node": "npm:^24.0.0"
     typescript: "npm:~5.9.2"
@@ -1664,15 +1664,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@omote/profiles@workspace:*, @omote/profiles@workspace:packages/profiles":
+"@omote-social/profiles@workspace:*, @omote-social/profiles@workspace:packages/profiles":
   version: 0.0.0-use.local
-  resolution: "@omote/profiles@workspace:packages/profiles"
+  resolution: "@omote-social/profiles@workspace:packages/profiles"
   dependencies:
     "@atcute/atproto": "catalog:"
     "@atcute/client": "catalog:"
     "@atcute/identity-resolver": "catalog:"
     "@atcute/lexicons": "catalog:"
-    "@omote/lexicon": "workspace:*"
+    "@omote-social/lexicon": "workspace:*"
     msw: "catalog:"
     valibot: "catalog:"
   languageName: unknown
@@ -4651,8 +4651,8 @@ __metadata:
     "@atcute/lexicons": "catalog:"
     "@atcute/oauth-browser-client": "catalog:"
     "@hookform/resolvers": "catalog:"
-    "@omote/lexicon": "workspace:*"
-    "@omote/profiles": "workspace:*"
+    "@omote-social/lexicon": "workspace:*"
+    "@omote-social/profiles": "workspace:*"
     "@tailwindcss/vite": "catalog:"
     "@tanstack/react-query": "catalog:"
     "@types/react": "npm:^19.2.0"

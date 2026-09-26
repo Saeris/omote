@@ -17,14 +17,14 @@ These records are **public**, like everything in your repository. Overrides let 
 
 ## Packages
 
-| Package                                  | What it is                                                                                            |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [`@omote/lexicon`](./packages/lexicon)   | The `social.omote.*` lexicons and their Valibot schemas                                               |
-| [`@omote/profiles`](./packages/profiles) | `getProfile(actor, context)`: resolve how an account appears in an app, in browsers, Node and Workers |
-| [`omote.social`](./apps/omote.social)    | The profile editor, and a `social.omote.getProfile` XRPC endpoint for prototyping                     |
+| Package                                         | What it is                                                                                            |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`@omote-social/lexicon`](./packages/lexicon)   | The `social.omote.*` lexicons and their Valibot schemas                                               |
+| [`@omote-social/profiles`](./packages/profiles) | `getProfile(actor, context)`: resolve how an account appears in an app, in browsers, Node and Workers |
+| [`omote.social`](./apps/omote.social)           | The profile editor, and a `social.omote.getProfile` XRPC endpoint for prototyping                     |
 
 ```ts
-import { getProfile } from "@omote/profiles";
+import { getProfile } from "@omote-social/profiles";
 
 const profile = await getProfile("alice.example.com", "social.taproom");
 // { did, handle, context, displayName?, description?, pronouns?, website?, avatar?, banner?, sources }

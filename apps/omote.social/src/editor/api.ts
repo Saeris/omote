@@ -1,5 +1,6 @@
 import type { Did } from "@atcute/lexicons";
 import {
+  IMAGE_TYPES,
   MAX_IMAGE_BYTES,
   NSID_BSKY_PROFILE,
   NSID_PROFILE,
@@ -9,7 +10,7 @@ import {
   type BaseProfile,
   type Blob,
   type ProfileOverride,
-} from "@omote/lexicon";
+} from "@omote-social/lexicon";
 import * as v from "valibot";
 import type { Session } from "../auth";
 
@@ -98,17 +99,22 @@ export const deleteOverride = async (session: Session, context: string): Promise
  * Upload an image to the account's PDS. Checked here first, so a too-large file is refused with a reason rather than a PDS error.
  */
 export const uploadImage = async (session: Session, file: File): Promise<Blob> => {
-  if (!["image/png", "image/jpeg"].includes(file.type)) {
-    throw new Error("Images must be PNG or JPEG.");
+  if (!(IMAGE_TYPES as readonly string[]).includes(file.type)) {
+    throw new Error("Images must be PNG, JPEG, GIF, WebP or AVIF.");
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Images must be 1 MB or smaller.");
+    throw new Error("Images must be 10 MB or smaller.");
   }
 
   const response = await session.rpc.post("com.atproto.repo.uploadBlob", {
     input: file,
     headers: { "content-type": file.type },
   });
+  if (!response.ok && response.status === 413) {
+    // Within our ceiling but over the person's own server's, e.g. a self-hosted PDS at its 5 MB default.
+    // Keyed on the status: the reference PDS names it PayloadTooLarge, and other servers may not.
+    throw new Error("Your account's server won't accept an image this large. Try a smaller one.");
+  }
   if (!response.ok) throw failure("Could not upload", response.data);
 
   return v.parse(blobSchema, response.data.blob);

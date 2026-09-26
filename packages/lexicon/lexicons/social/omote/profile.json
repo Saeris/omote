@@ -32,13 +32,14 @@
           },
           "avatar": {
             "type": "blob",
-            "accept": ["image/png", "image/jpeg"],
-            "maxSize": 1000000
+            "accept": ["image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"],
+            "maxSize": 10000000,
+            "description": "Animated formats (GIF, WebP, AVIF) are allowed; whether to animate them is each app's choice."
           },
           "banner": {
             "type": "blob",
-            "accept": ["image/png", "image/jpeg"],
-            "maxSize": 1000000
+            "accept": ["image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"],
+            "maxSize": 10000000
           },
           "hide": {
             "type": "array",

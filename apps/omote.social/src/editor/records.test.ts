@@ -1,4 +1,4 @@
-import { profileOverrideSchema } from "@omote/lexicon";
+import { profileOverrideSchema } from "@omote-social/lexicon";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { formSchema, toForm, toRecord, type FormValues } from "./records";

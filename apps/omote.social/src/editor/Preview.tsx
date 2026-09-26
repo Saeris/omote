@@ -1,5 +1,5 @@
-import type { BaseProfile, Field, ProfileOverride, Source } from "@omote/lexicon";
-import { blobUrl, mergeProfile } from "@omote/profiles";
+import type { BaseProfile, Field, ProfileOverride, Source } from "@omote-social/lexicon";
+import { blobUrl, mergeProfile } from "@omote-social/profiles";
 import type { Session } from "../auth";
 
 /** How each field is named to people, in the editor and the preview alike. */
@@ -19,7 +19,7 @@ const SOURCE_LABEL: Record<Source, string> = {
 };
 
 /**
- * How this app will show you, merged exactly as `@omote/profiles` does, so what you see here is what an app resolves.
+ * How this app will show you, merged exactly as `@omote-social/profiles` does, so what you see here is what an app resolves.
  *
  * A newly chosen image shows from the file itself: the PDS may not serve a blob until a record references it.
  */

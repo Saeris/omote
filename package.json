@@ -1,5 +1,5 @@
 {
-  "name": "@omote/omote.social",
+  "name": "@omote-social/omote.social",
   "version": "0.0.0",
   "private": true,
   "description": "Per-app profiles for ATProto: one identity, presented the way you choose in each app.",

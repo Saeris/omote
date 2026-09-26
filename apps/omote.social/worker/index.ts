@@ -1,10 +1,10 @@
 /**
  * omote.social's server side: the editor's static files, and `social.omote.getProfile` over XRPC.
  *
- * The endpoint is a convenience: the same answer `@omote/profiles` gives an app that resolves profiles itself, which is the path we recommend for production. It reads each person's records from their own PDS on every request and stores nothing, so any app can depend on it without trusting us with data, and anyone can run their own copy.
+ * The endpoint is a convenience: the same answer `@omote-social/profiles` gives an app that resolves profiles itself, which is the path we recommend for production. It reads each person's records from their own PDS on every request and stores nothing, so any app can depend on it without trusting us with data, and anyone can run their own copy.
  */
 
-import { getProfile, ProfileError, type ProfileErrorCode } from "@omote/profiles";
+import { getProfile, ProfileError, type ProfileErrorCode } from "@omote-social/profiles";
 
 const CORS = {
   // Any app, on any origin, may ask how someone appears in it.

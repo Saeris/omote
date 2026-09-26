@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "query",
-      "description": "An account's profile as it appears in one context: that context's override merged over the base profile. A convenience for prototyping and for apps that would rather not resolve identities themselves; the `@omote/profiles` library does the same work from the records, with no service in between.",
+      "description": "An account's profile as it appears in one context: that context's override merged over the base profile. A convenience for prototyping and for apps that would rather not resolve identities themselves; the `@omote-social/profiles` library does the same work from the records, with no service in between.",
       "parameters": {
         "type": "params",
         "required": ["actor", "context"],
