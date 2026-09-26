@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A Noh mask: a pale face, narrow eyes, small lips. -->
+  <ellipse cx="16" cy="16" rx="11" ry="14" fill="#f4efe6" stroke="#1c1917" stroke-width="1.5" />
+  <path d="M9.5 13.5q2.5-1.6 5 0M17.5 13.5q2.5-1.6 5 0" fill="none" stroke="#1c1917" stroke-width="1.6" stroke-linecap="round" />
+  <path d="M13.5 22.5q2.5 1.4 5 0" fill="none" stroke="#b91c1c" stroke-width="1.8" stroke-linecap="round" />
+</svg>

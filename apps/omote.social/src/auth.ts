@@ -3,7 +3,7 @@
  *
  * A public OAuth client: no server of ours holds tokens or secrets, so the whole editor is static files. The cost is shorter sessions (public clients' refresh tokens last two weeks at most), which suits something people open occasionally to change a profile.
  *
- * Handles resolve with `@omote-social/profiles`' own resolver (DNS-over-HTTPS, then `.well-known`), so signing in sends nobody's handle to Bluesky or to us.
+ * Handles resolve with `@omote-social/profiles`' own resolver (DNS-over-HTTPS, then `.well-known`), so signing in sends nobody's handle to Bluesky or to us. Only the sign-in field's suggestions ask Bluesky, and the field says so (see editor/handles.ts).
  */
 
 import { Client } from "@atcute/client";
@@ -31,12 +31,23 @@ export interface Session {
 const LAST_DID = "omote.lastDid";
 
 /**
+ * Running on this machine. `Base.astro` moves `localhost` to `127.0.0.1` before anything else runs, because the redirect must land there.
+ */
+const isLoopback = (): boolean => globalThis.location.hostname === "127.0.0.1";
+
+/**
  * The client id for wherever the editor is served.
  *
- * On `localhost` the spec's development exception applies, and its shape is exact: origin `http://localhost` with no port and an empty path, and `redirect_uri` and `scope` carried in the client id's own query string. Elsewhere it is the metadata document this site serves.
+ * On this machine the spec's development exception applies, and its shape is exact:
+ *
+ * - the client id's origin is `http://localhost`, with no port and an empty path;
+ * - the `redirect_uri` goes to `127.0.0.1`, not `localhost`. The reference PDS (bsky.social) refuses a `localhost` redirect under RFC 8252, while Cirrus accepts both, so only accounts on bsky.social showed it;
+ * - `redirect_uri` and `scope` ride in the client id's own query string.
+ *
+ * Elsewhere it is the metadata document this site serves.
  */
 const clientId = (redirectUri: string): string => {
-  if (globalThis.location.hostname === "localhost") {
+  if (isLoopback()) {
     return `http://localhost?${new URLSearchParams({ redirect_uri: redirectUri, scope: SCOPE }).toString()}`;
   }
 
@@ -51,6 +62,7 @@ const configure = (): void => {
   }
 
   // The site root, not a /callback route: the page that starts sign-in finishes it, on any static host.
+  // On this machine, that page is already on 127.0.0.1 (see isLoopback), so its origin is the redirect's.
   const redirectUri = `${globalThis.location.origin}/`;
 
   configureOAuth({

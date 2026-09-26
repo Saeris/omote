@@ -1,10 +1,12 @@
 import { defaultResolver } from "@omote-social/profiles";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { Button, FieldError, Form, Input, Label, Text, TextField } from "react-aria-components";
+import { useEffect, useState } from "react";
+import { Button, Form } from "react-aria-components";
 import { beginSignIn, currentSession, type Session } from "../auth";
 import { listProfiles } from "./api";
 import { BaseEditor } from "./BaseEditor";
+import { HandleField } from "./HandleField";
+import { normaliseHandle, rememberHandle } from "./handles";
 import { Overview } from "./Overview";
 import { buildOverview } from "./overview-model";
 
@@ -38,28 +40,19 @@ const SignIn = ({ problem }: { readonly problem?: string }) => {
       className="flex max-w-sm flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
-        beginSignIn(handle.trim().replace(/^@/u, "")).catch((cause: unknown) =>
+        beginSignIn(normaliseHandle(handle)).catch((cause: unknown) =>
           setError((cause as Error).message),
         );
       }}
     >
-      <TextField
+      <HandleField
         value={handle}
-        onChange={setHandle}
-        isRequired
-        isInvalid={Boolean(error)}
-        className="flex flex-col gap-1"
-      >
-        <Label className="text-sm font-medium">Your handle</Label>
-        <Input
-          placeholder="you.bsky.social"
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
-        <Text slot="description" className="text-xs text-neutral-600">
-          Any ATProto account works. You'll confirm on your own server.
-        </Text>
-        <FieldError className="text-xs text-red-700">{error}</FieldError>
-      </TextField>
+        onChange={(value) => {
+          setHandle(value);
+          setError(undefined);
+        }}
+        error={error}
+      />
       <Button type="submit" className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white">
         Sign in
       </Button>
@@ -77,6 +70,11 @@ const Workspace = ({ session }: { readonly session: Session }) => {
     queryFn: () => listProfiles(session),
   });
   const [editing, setEditing] = useState(false);
+
+  // Remembered only once signed in, so a mistyped handle is never suggested back.
+  useEffect(() => {
+    if (handle.data && handle.data !== "handle.invalid") rememberHandle(handle.data);
+  }, [handle.data]);
 
   const tab = (active: boolean) =>
     `rounded-md px-3 py-2 text-left text-sm ${active ? "bg-neutral-900 text-white" : ""}`;
