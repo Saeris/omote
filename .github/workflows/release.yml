@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Serialise releases on a branch; never cancel one halfway through publishing.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # What would a release do? No write permissions, no publishing credentials.
+  plan:
+    name: Plan
+    if: github.repository == 'Saeris/omote'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: "lts"
+          cache: true
+
+      - id: plan
+        run: yarn bumpy ci plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # Opens or updates the Version Packages PR from pending bump files.
+  version-pr:
+    name: Version PR
+    needs: plan
+    if: needs.plan.outputs.mode == 'version-pr'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: "lts"
+          cache: true
+
+      - run: yarn bumpy ci release --expect-mode version-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Lets the version PR trigger CI, which GitHub otherwise suppresses for bot pushes.
+          BUMPY_GH_TOKEN: ${{ secrets.BUMPY_GH_TOKEN }}
+
+  # Publishes to npm once the Version Packages PR is merged. The only job with publishing credentials.
+  publish:
+    name: Publish
+    needs: plan
+    if: needs.plan.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    environment: publish
+    permissions:
+      contents: write
+      # npm trusted publishing (OIDC) and provenance.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: "lts"
+          cache: true
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing and provenance need a recent npm; Bumpy recommends >= 11.15.0.
+      - run: npm install -g npm@latest
+
+      # Bumpy runs each package's buildCommand (vp pack), packs with Yarn so
+      # workspace: and catalog: ranges resolve, then publishes with npm.
+      - run: yarn bumpy ci release --expect-mode publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMPY_GH_TOKEN: ${{ secrets.BUMPY_GH_TOKEN }}
+          # Only for the very first release, before trusted publishing can be
+          # configured on npm. Delete the secret once it is.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Yarn 4 corrupts the tarball path Bumpy reads from stdout when colours
+          # are on; NO_COLOR alone is not enough for Yarn 4.
+          NO_COLOR: "1"
+          YARN_ENABLE_COLORS: "false"

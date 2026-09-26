@@ -96,6 +96,13 @@ Default to surfacing uncertainty, not hiding it.
 - **No third party in the identity path:** handles resolve over DNS-over-HTTPS
   and `.well-known`, DIDs via PLC or did:web, and images come from the account's
   own PDS, never a Bluesky CDN.
+- **Releases:** Bumpy (`.bumpy/`). A PR that changes a published package adds a
+  bump file (`yarn bumpy add`); the release workflow opens a version PR, and
+  merging it publishes. Published packages keep `main`/`exports` on `src/` for
+  the workspace; `publishConfig` swaps in `dist/` when Yarn packs. The site is
+  private: Cloudflare Workers Builds deploys it (see its README), not GitHub.
+- **Local editor:** `yarn dev` (Astro, hot reload, sign-in works on localhost);
+  `yarn preview` adds the Worker.
 - Do not use `vp install` to bootstrap: it writes a pnpm `devEngines` block that
   fights Yarn. Use `yarn install`.
 

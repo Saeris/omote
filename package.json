@@ -11,6 +11,8 @@
   ],
   "type": "module",
   "scripts": {
+    "dev": "yarn workspace omote.social dev",
+    "preview": "yarn workspace omote.social preview",
     "ci": "vp check && vp test",
     "check": "vp check",
     "format": "vp check --fix",
@@ -18,13 +20,14 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@varlock/bumpy": "^1.18.1",
     "typescript": "~5.9.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
   "resolutions": {
-    "vite": "8.3.0"
+    "vite": "npm:@voidzero-dev/vite-plus-core@^0.3.2"
   },
   "engines": {
     "node": ">=22"

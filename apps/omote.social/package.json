@@ -7,8 +7,9 @@
   "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
   "type": "module",
   "scripts": {
-    "dev": "astro build && wrangler dev",
+    "dev": "astro dev",
     "build": "astro build",
+    "preview": "astro build && wrangler dev",
     "deploy": "astro build && wrangler deploy",
     "types": "wrangler types worker/worker-configuration.d.ts"
   },
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19.2.0",
     "msw": "catalog:",
     "tailwindcss": "catalog:",
+    "vite": "catalog:",
     "wrangler": "catalog:"
   }
 }

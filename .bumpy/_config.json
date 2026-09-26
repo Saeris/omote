@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/@varlock/bumpy/config-schema.json",
+  "baseBranch": "main",
+  "changelog": "github",
+  "githubRelease": true,
+  "publish": {
+    "provenance": true
+  },
+  "packages": {
+    "@omote-social/lexicon": {
+      "buildCommand": "vp pack"
+    },
+    "@omote-social/profiles": {
+      "buildCommand": "vp pack"
+    }
+  }
+}

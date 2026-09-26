@@ -1,17 +1,55 @@
 {
   "name": "@omote-social/lexicon",
   "version": "0.0.0",
-  "private": true,
-  "description": "The social.omote lexicons, and their Valibot schemas.",
+  "description": "The social.omote lexicons for per-app ATProto profiles, and their Valibot schemas.",
+  "keywords": [
+    "atproto",
+    "bluesky",
+    "lexicon",
+    "omote",
+    "profile",
+    "valibot"
+  ],
+  "homepage": "https://github.com/Saeris/omote/tree/main/packages/lexicon#readme",
+  "bugs": {
+    "url": "https://github.com/Saeris/omote/issues"
+  },
   "license": "MIT",
   "author": "Drake Costa <drake@saeris.io> (https://saeris.gg)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Saeris/omote.git",
+    "directory": "packages/lexicon"
+  },
   "files": [
-    "src",
+    "dist",
     "lexicons"
   ],
   "type": "module",
+  "sideEffects": false,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./lexicons/*": "./lexicons/*"
+  },
+  "publishConfig": {
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "./lexicons/*": "./lexicons/*",
+      "./package.json": "./package.json"
+    },
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "vp pack"
+  },
   "dependencies": {
     "valibot": "catalog:"
   },
