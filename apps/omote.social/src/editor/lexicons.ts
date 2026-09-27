@@ -6,7 +6,7 @@ import {
 import { DohJsonLexiconAuthorityResolver, LexiconSchemaResolver } from "@atcute/lexicon-resolver";
 import type { Nsid } from "@atcute/lexicons/syntax";
 import { NSID_BASE_PROFILE } from "@omote-social/lexicon";
-import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json";
+import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json" with { type: "json" };
 import { readProfileShape, type ProfileShape } from "./shape";
 
 /**

@@ -93,7 +93,9 @@ Default to surfacing uncertainty, not hiding it.
   - atcute for all ATProto code.
   - Valibot schemas as the type source of truth.
   - React Aria, React Hook Form and TanStack Query in the editor.
-  - Vitest, with MSW mocking the network at the fetch boundary.
+  - Vitest, with MSW mocking the network at the fetch boundary. Test files
+    live in a `__tests__/` folder beside the code they test, and JSON is
+    imported `with { type: "json" }` so TypeScript types it, never cast.
   - Cloudflare Workers for hosting.
 - **No third party in the identity path:** handles resolve over DNS-over-HTTPS
   and `.well-known`, DIDs via PLC or did:web, and images come from the account's

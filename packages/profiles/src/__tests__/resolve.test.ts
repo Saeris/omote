@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_RECORDS, loadChain, readProfileRecord, resolveProfile } from "./resolve";
+import { MAX_RECORDS, loadChain, readProfileRecord, resolveProfile } from "../resolve";
 
 const BSKY = "app.bsky.actor.profile";
 const BASE = "social.omote.actor.profile";

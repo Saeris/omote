@@ -1,6 +1,6 @@
 import { DID, HANDLE, bsky, profile, reset, server, state } from "@omote-social/profiles/testing";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import worker from "./index";
+import worker from "../index";
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(reset);

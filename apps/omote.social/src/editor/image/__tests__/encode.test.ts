@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { FieldRule } from "../shape";
-import { encodeToFit, formatsFor, TooLargeError, type Encode } from "./encode";
+import type { FieldRule } from "../../shape";
+import { encodeToFit, formatsFor, TooLargeError, type Encode } from "../encode";
 
 const rule = (accept: string[], maxSize?: number): FieldRule => ({
   kind: "image",

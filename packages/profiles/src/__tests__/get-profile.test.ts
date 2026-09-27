@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { getProfile, ProfileError } from "./get-profile";
-import { DID, HANDLE, PDS, base, bsky, profile, reset, server, state } from "./testing";
+import { getProfile, ProfileError } from "../get-profile";
+import { DID, HANDLE, PDS, base, bsky, profile, reset, server, state } from "../testing";
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(reset);

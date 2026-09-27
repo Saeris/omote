@@ -1,4 +1,4 @@
-import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json";
+import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json" with { type: "json" };
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import {
@@ -8,8 +8,8 @@ import {
   toForm,
   toRecord,
   type FormValues,
-} from "./form-model";
-import { readProfileShape, type ProfileShape } from "./shape";
+} from "../form-model";
+import { readProfileShape, type ProfileShape } from "../shape";
 
 const BSKY = "app.bsky.actor.profile";
 const BASE = "social.omote.actor.profile";

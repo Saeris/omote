@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { appOf, byPrecedence, isProfileCollection } from "./collections";
-import { buildOverview } from "./overview-model";
+import { appOf, byPrecedence, isProfileCollection } from "../collections";
+import { buildOverview } from "../overview-model";
 
 const BSKY = "app.bsky.actor.profile";
 const BASE = "social.omote.actor.profile";

@@ -9,7 +9,7 @@ import {
   rotateClockwise,
   rotatedSize,
   zoomTo,
-} from "./crop";
+} from "../crop";
 
 const landscape = { width: 4000, height: 3000 };
 const SQUARE = 1;

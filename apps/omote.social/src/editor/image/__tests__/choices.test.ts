@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { imageChoices } from "./choices";
+import { imageChoices } from "../choices";
 
 const blob = (link: string, mimeType = "image/jpeg") => ({
   $type: "blob",

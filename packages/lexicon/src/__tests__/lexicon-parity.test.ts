@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import {
@@ -8,32 +7,13 @@ import {
   MAX_IMAGE_BYTES,
   NSID_BASE_PROFILE,
   baseProfileSchema,
-} from "./index";
+} from "../index";
+import lexicon from "../../lexicons/social/omote/actor/profile.json" with { type: "json" };
 
 /**
  * The JSON lexicon is what every other app and PDS reads; the Valibot schema is what our code enforces. If they disagree, we accept records the network rejects, or reject ones it accepts. These tests pin the limits that matter.
  */
 
-interface Property {
-  type: string;
-  maxGraphemes?: number;
-  maxLength?: number;
-  accept?: string[];
-  maxSize?: number;
-  items?: { type: string; format?: string };
-}
-
-const lexicon = JSON.parse(
-  readFileSync(new URL("../lexicons/social/omote/actor/profile.json", import.meta.url), "utf8"),
-) as {
-  id: string;
-  defs: {
-    main: {
-      key: string;
-      record: { required?: string[]; nullable: string[]; properties: Record<string, Property> };
-    };
-  };
-};
 const { record: schema } = lexicon.defs.main;
 const properties = schema.properties;
 
@@ -54,7 +34,7 @@ describe("the shared base's lexicon and its schema", () => {
 
   it("let every shared field be hidden, and none be required, as a Partial of the shared type", () => {
     expect(schema.nullable).toEqual([...FIELDS]);
-    expect(schema.required ?? []).toEqual([]);
+    expect(schema).not.toHaveProperty("required");
     expect(accepts({})).toBe(true);
     for (const field of FIELDS) {
       expect(accepts({ [field]: null })).toBe(true);
@@ -62,9 +42,9 @@ describe("the shared base's lexicon and its schema", () => {
   });
 
   it("keep Bluesky's text limits, since Bluesky's profile is the template", () => {
-    expect(properties.displayName?.maxGraphemes).toBe(64);
-    expect(properties.description?.maxGraphemes).toBe(256);
-    expect(properties.pronouns?.maxGraphemes).toBe(20);
+    expect(properties.displayName.maxGraphemes).toBe(64);
+    expect(properties.description.maxGraphemes).toBe(256);
+    expect(properties.pronouns.maxGraphemes).toBe(20);
   });
 
   it.each([
@@ -160,11 +140,11 @@ describe("images", () => {
     size,
   });
 
-  it.each(["avatar", "banner"])(
+  it.each(["avatar", "banner"] as const)(
     "agree on what a %s may be, matching Discord's formats and ceiling",
     (field) => {
-      expect(properties[field]?.accept).toEqual([...IMAGE_TYPES]);
-      expect(properties[field]?.maxSize).toBe(MAX_IMAGE_BYTES);
+      expect(properties[field].accept).toEqual([...IMAGE_TYPES]);
+      expect(properties[field].maxSize).toBe(MAX_IMAGE_BYTES);
     },
   );
 

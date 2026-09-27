@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normaliseHandle, readActors, suggest } from "./handles";
+import { normaliseHandle, readActors, suggest } from "../handles";
 
 describe("handle suggestions", () => {
   it("offers handles used on this device first, since the account used last is the likeliest", () => {

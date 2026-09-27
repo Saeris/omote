@@ -1,6 +1,6 @@
-import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json";
+import baseLexicon from "@omote-social/lexicon/lexicons/social/omote/actor/profile.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import { accepts, readProfileShape } from "./shape";
+import { accepts, readProfileShape } from "../shape";
 
 const lexicon = (record: Record<string, unknown>) => ({
   lexicon: 1,
