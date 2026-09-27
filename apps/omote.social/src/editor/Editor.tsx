@@ -7,7 +7,7 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Form } from "react-aria-components";
 import {
   beginSignIn,
@@ -19,6 +19,7 @@ import {
 } from "../auth";
 import { listProfiles } from "./api";
 import { byPrecedence, nameOf } from "./collections";
+import { DiscardDialog } from "./DiscardDialog";
 import { HandleField } from "./HandleField";
 import { normaliseHandle, rememberHandle } from "./handles";
 import { Overview } from "./Overview";
@@ -96,17 +97,28 @@ const SignIn = ({ problem }: { readonly problem?: string }) => {
   );
 };
 
+/** Where the person is going when they leave a profile. */
+type Leave =
+  | { readonly kind: "select"; readonly target: string | undefined }
+  | { readonly kind: "signOut" };
+
 const tab = (active: boolean) =>
   `rounded-md px-3 py-2 text-left text-sm ${active ? "bg-neutral-900 text-white" : "hover:bg-neutral-100"}`;
 
 /**
  * Which profile is open, kept in the URL (`?profile=`) so it survives a reload and the back button works. After `requestAccess`, the profile it was asked for reopens.
  */
-const useSelection = () => {
+const profileIn = (search: string) => new URLSearchParams(search).get("profile") ?? undefined;
+
+const useSelection = (
+  onBlockedBack: (target: string | undefined) => void,
+  blocked: () => boolean,
+) => {
   const [selected, setSelected] = useState<string | undefined>(
-    () =>
-      takeReturnTo() ?? new URLSearchParams(globalThis.location.search).get("profile") ?? undefined,
+    () => takeReturnTo() ?? profileIn(globalThis.location.search),
   );
+  const current = useRef(selected);
+  current.current = selected;
 
   useEffect(() => {
     const url = new URL(globalThis.location.href);
@@ -116,11 +128,22 @@ const useSelection = () => {
   }, [selected]);
 
   useEffect(() => {
-    const onPop = () =>
-      setSelected(new URLSearchParams(globalThis.location.search).get("profile") ?? undefined);
+    const onPop = () => {
+      const target = profileIn(globalThis.location.search);
+      if (!blocked()) {
+        setSelected(target);
+        return;
+      }
+      // The browser has already moved: put the page back where it was, then ask.
+      const url = new URL(globalThis.location.href);
+      if (current.current) url.searchParams.set("profile", current.current);
+      else url.searchParams.delete("profile");
+      globalThis.history.pushState(null, "", url);
+      onBlockedBack(target);
+    };
     globalThis.addEventListener("popstate", onPop);
     return () => globalThis.removeEventListener("popstate", onPop);
-  }, []);
+  }, [blocked, onBlockedBack]);
 
   return [selected, setSelected] as const;
 };
@@ -134,7 +157,41 @@ const Workspace = ({ session }: { readonly session: Session }) => {
     queryKey: ["profiles", session.did],
     queryFn: () => listProfiles(session),
   });
-  const [selected, select] = useSelection();
+
+  // Unsaved changes in the open profile, and where the person was trying to go when asked about them.
+  const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const [leaving, setLeaving] = useState<Leave>();
+  const blocked = useCallback(() => dirtyRef.current, []);
+  const onBlockedBack = useCallback(
+    (target: string | undefined) => setLeaving({ kind: "select", target }),
+    [],
+  );
+  const [selected, setSelected] = useSelection(onBlockedBack, blocked);
+
+  const signOut = async () => {
+    await session.signOut();
+    await queryClient.resetQueries();
+  };
+  const go = (leave: Leave) => {
+    setDirty(false);
+    if (leave.kind === "select") setSelected(leave.target);
+    else void signOut();
+  };
+  /** Leave the open profile, asking first if that would lose changes. */
+  const leave = (next: Leave) => (dirtyRef.current ? setLeaving(next) : go(next));
+  const select = (target: string | undefined) => {
+    if (target !== selected) leave({ kind: "select", target });
+  };
+
+  // Reloading or closing the tab can't show our dialog; the browser asks instead.
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    globalThis.addEventListener("beforeunload", onBeforeUnload);
+    return () => globalThis.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 
   // Remembered only once signed in, so a mistyped handle is never suggested back.
   useEffect(() => {
@@ -152,13 +209,7 @@ const Workspace = ({ session }: { readonly session: Session }) => {
         <p className="text-sm text-neutral-600">
           Signed in as <b>@{handle.data ?? session.did}</b>
         </p>
-        <Button
-          className="text-sm underline"
-          onPress={async () => {
-            await session.signOut();
-            await queryClient.resetQueries();
-          }}
-        >
+        <Button className="text-sm underline" onPress={() => leave({ kind: "signOut" })}>
           Sign out
         </Button>
       </header>
@@ -210,7 +261,8 @@ const Workspace = ({ session }: { readonly session: Session }) => {
               handle={handle.data}
               profiles={profiles.data}
               collection={selected}
-              onDeleted={() => select(undefined)}
+              onDeleted={() => go({ kind: "select", target: undefined })}
+              onDirtyChange={setDirty}
             />
           ) : (
             <Overview
@@ -222,6 +274,17 @@ const Workspace = ({ session }: { readonly session: Session }) => {
           )}
         </main>
       </div>
+
+      {leaving && selected && (
+        <DiscardDialog
+          profile={nameOf(selected)}
+          onKeep={() => setLeaving(undefined)}
+          onDiscard={() => {
+            setLeaving(undefined);
+            go(leaving);
+          }}
+        />
+      )}
     </div>
   );
 };

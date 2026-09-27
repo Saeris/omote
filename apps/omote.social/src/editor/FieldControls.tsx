@@ -25,6 +25,8 @@ interface Props {
   readonly inherited: Inherited;
   /** The record builds on others, so a field can inherit rather than only be empty. */
   readonly canInherit: boolean;
+  /** Shown but not editable, until omote is allowed to write this record. */
+  readonly isDisabled?: boolean;
 }
 
 const status = (
@@ -57,6 +59,7 @@ const Header = ({
   rule,
   inherited,
   canInherit,
+  isDisabled = false,
 }: {
   readonly field: Field;
   readonly value: FieldValue;
@@ -67,7 +70,7 @@ const Header = ({
     <span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[value.mode]}`}>
       {status(collection, value, inherited, canInherit)}
     </span>
-    <span className="ml-auto flex gap-3">
+    <span className={`ml-auto flex gap-3 ${isDisabled ? "hidden" : ""}`}>
       {value.mode === "set" && canInherit && (
         <Button className={ACTION} onPress={() => onChange({ mode: "inherit", text: "" })}>
           {inherited.source ? `Use ${nameOf(inherited.source.collection)}'s` : "Clear"}
@@ -97,6 +100,7 @@ export const TextFieldControl = ({
   rule,
   inherited,
   canInherit,
+  isDisabled = false,
   multiline = false,
   placeholder,
 }: Props & { readonly multiline?: boolean; readonly placeholder?: string }) => (
@@ -117,7 +121,7 @@ export const TextFieldControl = ({
           value={shown}
           onChange={(text) => onChange({ mode: "set", text })}
           onBlur={onBlur}
-          isDisabled={current.mode === "hide"}
+          isDisabled={isDisabled || current.mode === "hide"}
           isInvalid={fieldState.invalid}
           validationBehavior="aria"
         >
@@ -129,6 +133,7 @@ export const TextFieldControl = ({
             rule={rule}
             inherited={inherited}
             canInherit={canInherit}
+            isDisabled={isDisabled}
           />
           {multiline ? (
             <TextArea
@@ -168,6 +173,7 @@ export const ImageFieldControl = ({
   rule,
   inherited,
   canInherit,
+  isDisabled = false,
   session,
   choices,
   localImage,
@@ -227,6 +233,7 @@ export const ImageFieldControl = ({
               rule={rule}
               inherited={inherited}
               canInherit={canInherit}
+              isDisabled={isDisabled}
             />
             <div className="flex items-center gap-3">
               <div className={`${shape} shrink-0 overflow-hidden bg-neutral-200`}>
@@ -235,7 +242,7 @@ export const ImageFieldControl = ({
                 )}
               </div>
               <Button
-                isDisabled={uploading}
+                isDisabled={uploading || isDisabled}
                 onPress={() => setChoosing(true)}
                 className="rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:opacity-60"
               >
@@ -245,7 +252,7 @@ export const ImageFieldControl = ({
                     ? `Replace ${FIELD_LABEL[field].toLowerCase()}`
                     : `Choose ${field === "avatar" ? "an avatar" : "a banner"}`}
               </Button>
-              {current.mode === "set" && !canInherit && !rule.required && (
+              {current.mode === "set" && !canInherit && !rule.required && !isDisabled && (
                 <Button className={ACTION} onPress={() => onChange({ mode: "inherit", text: "" })}>
                   Remove
                 </Button>

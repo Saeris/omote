@@ -2,7 +2,7 @@ import { valibotResolver } from "@hookform/resolvers/valibot";
 import { FIELDS, NSID_BASE_PROFILE, type Field } from "@omote-social/lexicon";
 import { resolveProfile } from "@omote-social/profiles";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form, Switch } from "react-aria-components";
 import { Controller, useForm } from "react-hook-form";
 import { requestAccess, type Session } from "../auth";
@@ -34,6 +34,7 @@ export const ProfileEditor = ({
   collection,
   shape,
   onDeleted,
+  onDirtyChange,
 }: {
   readonly session: Session;
   readonly handle: string | undefined;
@@ -41,6 +42,8 @@ export const ProfileEditor = ({
   readonly collection: string;
   readonly shape: ProfileShape;
   readonly onDeleted: () => void;
+  /** Told whenever the form gains or loses unsaved changes, so leaving can be confirmed. */
+  readonly onDirtyChange: (dirty: boolean) => void;
 }) => {
   const existing = profiles.get(collection);
   const isBase = collection === NSID_BASE_PROFILE;
@@ -52,6 +55,13 @@ export const ProfileEditor = ({
     mode: "onChange",
   });
   const [localImages, setLocalImages] = useState<LocalImages>({});
+
+  const { isDirty } = formState;
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+  // Leaving this profile leaves nothing unsaved behind.
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
 
   const values = watch();
   const bases = shape.extends ? basesFor(values, existing) : [];
@@ -111,8 +121,7 @@ export const ProfileEditor = ({
           >
             <p>
               omote can't edit your {nameOf(collection)} profile yet. Your server will ask you to
-              allow it, for this app only, and bring you back here. Allow it before making changes:
-              leaving the page loses them.
+              allow it, for this app only, and bring you back here to make your changes.
             </p>
             <Button
               className="self-start rounded-md bg-sky-900 px-3 py-1.5 text-white"
@@ -129,6 +138,7 @@ export const ProfileEditor = ({
             name="fromBluesky"
             render={({ field }) => (
               <Switch
+                isDisabled={!writable}
                 isSelected={field.value}
                 onChange={field.onChange}
                 className="group flex items-center gap-3 text-sm"
@@ -155,6 +165,8 @@ export const ProfileEditor = ({
             rule,
             inherited: { value: inherited.fields[field], source: inherited.sources[field] },
             canInherit: shape.extends,
+            // Nothing can be changed until omote may save it: edits made first would be lost to the permission trip.
+            isDisabled: !writable,
           };
           return rule.kind === "text" ? (
             <TextFieldControl

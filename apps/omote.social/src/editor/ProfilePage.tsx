@@ -17,12 +17,14 @@ export const ProfilePage = ({
   profiles,
   collection,
   onDeleted,
+  onDirtyChange,
 }: {
   readonly session: Session;
   readonly handle: string | undefined;
   readonly profiles: Profiles;
   readonly collection: string;
   readonly onDeleted: () => void;
+  readonly onDirtyChange: (dirty: boolean) => void;
 }) => {
   const shape = useQuery({
     queryKey: ["shape", collection],
@@ -72,6 +74,7 @@ export const ProfilePage = ({
       collection={collection}
       shape={shape.data}
       onDeleted={onDeleted}
+      onDirtyChange={onDirtyChange}
     />
   );
 };
