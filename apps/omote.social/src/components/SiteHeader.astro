@@ -1,26 +1,19 @@
 ---
-import { EDITOR_PATH } from "../paths";
+import SiteNav from "./SiteNav.astro";
 
-/** The site's top bar: home, docs, source, and the editor. */
+/** The top bar on the site's own pages. The docs put the same navigation in Starlight's header (see DocsHeader.astro). */
 ---
 
-<header class="border-b border-neutral-200 bg-white">
-  <nav
-    aria-label="Site"
-    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-4"
-  >
-    <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
-      <img src="/favicon.svg" alt="" width="28" height="28" />
-      omote
-    </a>
-    <ul class="flex items-center gap-5 text-sm">
-      <li><a href="/docs/" class="hover:underline">Docs</a></li>
-      <li><a href="https://github.com/Saeris/omote" class="hover:underline">GitHub</a></li>
-      <li>
-        <a href={EDITOR_PATH} class="rounded-md bg-neutral-900 px-3 py-1.5 font-medium text-white">
-          Open the editor
-        </a>
-      </li>
-    </ul>
-  </nav>
+<header class="site-header">
+  <SiteNav />
 </header>
+
+<style>
+  /* The same height, border and padding as Starlight's header, so moving between the site and the docs changes nothing at the top. */
+  .site-header {
+    height: 3.5rem;
+    padding-inline: 1.5rem;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fff;
+  }
+</style>

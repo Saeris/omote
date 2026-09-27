@@ -1,0 +1,27 @@
+---
+import Search from "virtual:starlight/components/Search";
+import SiteNav from "../SiteNav.astro";
+
+/**
+ * Replaces Starlight's header, so the docs share the site's navigation. Starlight's own header wrapper supplies the height, border and padding; the docs keep their search box.
+ */
+---
+
+<div class="docs-header">
+  <SiteNav>
+    <Search slot="search" />
+  </SiteNav>
+</div>
+
+<style>
+  .docs-header {
+    height: 100%;
+  }
+
+  /* On narrow screens Starlight places its sidebar button at the header's right edge. */
+  @media (max-width: 50em) {
+    .docs-header {
+      padding-inline-end: 2.75rem;
+    }
+  }
+</style>

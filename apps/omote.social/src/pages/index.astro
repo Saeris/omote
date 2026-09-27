@@ -131,14 +131,14 @@ const secondary = "rounded-md border border-neutral-300 bg-white px-4 py-2 font-
       <div class="grid gap-4 md:grid-cols-2">
         <figure class="flex min-w-0 flex-col gap-2">
           <figcaption class="text-sm font-medium">An app's own profile record</figcaption>
-          <div class="overflow-x-auto rounded-lg text-sm [&_pre]:p-4">
-            <Code code={record} lang="json" theme="github-dark" />
+          <div class="text-sm [&_pre]:rounded-lg [&_pre]:p-4">
+            <Code code={record} lang="json" theme="github-dark" wrap />
           </div>
         </figure>
         <figure class="flex min-w-0 flex-col gap-2">
           <figcaption class="text-sm font-medium">Resolved in that app</figcaption>
-          <div class="overflow-x-auto rounded-lg text-sm [&_pre]:p-4">
-            <Code code={usage} lang="ts" theme="github-dark" />
+          <div class="text-sm [&_pre]:rounded-lg [&_pre]:p-4">
+            <Code code={usage} lang="ts" theme="github-dark" wrap />
           </div>
         </figure>
       </div>

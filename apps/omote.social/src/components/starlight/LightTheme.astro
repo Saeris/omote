@@ -1,0 +1,12 @@
+---
+/**
+ * Replaces Starlight's theme provider. The rest of the site has no dark mode yet, so the docs stay light to match; the design pass decides dark mode for the whole site at once.
+ *
+ * Inline, like Starlight's own, so the page never flashes the wrong theme. `updatePickers` is kept as a no-op for any Starlight script that calls it.
+ */
+---
+
+<script is:inline>
+  document.documentElement.dataset.theme = "light";
+  window.StarlightThemeProvider = { updatePickers() {} };
+</script>

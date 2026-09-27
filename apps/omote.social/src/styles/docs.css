@@ -1,0 +1,12 @@
+/* Starlight's header, sized and coloured like the site's own (see SiteHeader.astro). */
+:root {
+  --sl-nav-height: 3.5rem;
+}
+
+:root[data-theme="light"] {
+  --sl-color-bg-nav: #fff;
+}
+
+.header {
+  border-bottom-color: #e5e5e5;
+}

@@ -19,6 +19,13 @@ export default defineConfig({
       // The site's own pages aren't docs, so a missing page shouldn't look like one.
       disable404Route: true,
       social: [{ icon: "github", label: "GitHub", href: "https://github.com/Saeris/omote" }],
+      // The site's own navigation, in place of Starlight's header, and the site's light theme.
+      components: {
+        Header: "./src/components/starlight/DocsHeader.astro",
+        ThemeProvider: "./src/components/starlight/LightTheme.astro",
+        ThemeSelect: "./src/components/starlight/NoThemeSelect.astro",
+      },
+      customCss: ["./src/styles/docs.css"],
       editLink: {
         baseUrl: "https://github.com/Saeris/omote/edit/main/apps/omote.social/",
       },
