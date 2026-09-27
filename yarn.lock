@@ -4869,6 +4869,7 @@ __metadata:
     astro: "catalog:"
     msw: "catalog:"
     react: "npm:^19.2.0"
+    react-aria: "catalog:"
     react-aria-components: "catalog:"
     react-dom: "npm:^19.2.0"
     react-hook-form: "catalog:"

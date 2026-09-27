@@ -1,21 +1,13 @@
-import { IMAGE_TYPES, type Blob, type Field, type Source } from "@omote-social/lexicon";
+import type { Blob, Field, Source } from "@omote-social/lexicon";
 import { blobUrl, type Value } from "@omote-social/profiles";
-import {
-  Button,
-  FieldError,
-  FileTrigger,
-  Input,
-  Label,
-  Text,
-  TextArea,
-  TextField,
-} from "react-aria-components";
+import { Button, FieldError, Input, Label, Text, TextArea, TextField } from "react-aria-components";
+import { useState } from "react";
 import { Controller, type Control } from "react-hook-form";
 import type { Session } from "../auth";
-import { describeImageRule } from "./api";
 import { nameOf } from "./collections";
 import type { FieldValue, FormValues } from "./form-model";
-import { FIELD_LABEL } from "./labels";
+import { AVATAR, BANNER, ImageDialog, type Choice, type Picked } from "./image/ImageDialog";
+import { FIELD_LABEL, hiddenLabel, ownLabel } from "./labels";
 import type { FieldRule } from "./shape";
 
 /** What a field inherits: the value its bases give, and which record gave it. */
@@ -26,6 +18,8 @@ export interface Inherited {
 
 interface Props {
   readonly control: Control<FormValues>;
+  /** The record being edited, which the labels name. */
+  readonly collection: string;
   readonly field: Field;
   readonly rule: FieldRule;
   readonly inherited: Inherited;
@@ -33,9 +27,14 @@ interface Props {
   readonly canInherit: boolean;
 }
 
-const status = (value: FieldValue, inherited: Inherited, canInherit: boolean): string => {
-  if (value.mode === "set") return "Set here";
-  if (value.mode === "hide") return "Hidden here";
+const status = (
+  collection: string,
+  value: FieldValue,
+  inherited: Inherited,
+  canInherit: boolean,
+): string => {
+  if (value.mode === "set") return ownLabel(collection);
+  if (value.mode === "hide") return hiddenLabel(collection);
   if (inherited.source?.hidden) return `Hidden by ${nameOf(inherited.source.collection)}`;
   if (inherited.source) return `From ${nameOf(inherited.source.collection)}`;
   return canInherit ? "Nothing to inherit" : "Not set";
@@ -51,6 +50,7 @@ const ACTION = "text-xs text-neutral-600 underline underline-offset-2";
 
 /** The label row: the field's name, where its value comes from, and what can be done about it. */
 const Header = ({
+  collection,
   field,
   value,
   onChange,
@@ -65,7 +65,7 @@ const Header = ({
   <div className="flex flex-wrap items-center gap-2">
     <Label className="text-sm font-medium">{FIELD_LABEL[field]}</Label>
     <span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[value.mode]}`}>
-      {status(value, inherited, canInherit)}
+      {status(collection, value, inherited, canInherit)}
     </span>
     <span className="ml-auto flex gap-3">
       {value.mode === "set" && canInherit && (
@@ -92,6 +92,7 @@ const Header = ({
  */
 export const TextFieldControl = ({
   control,
+  collection,
   field,
   rule,
   inherited,
@@ -121,6 +122,7 @@ export const TextFieldControl = ({
           validationBehavior="aria"
         >
           <Header
+            collection={collection}
             field={field}
             value={current}
             onChange={onChange}
@@ -155,70 +157,86 @@ export const TextFieldControl = ({
 );
 
 /**
- * An image: the one the app shows today, and ways to replace it, inherit it or hide it. Uploads are checked against this app's own formats and size.
+ * An image: the one the app shows today, and ways to replace it, inherit it or hide it.
+ *
+ * Replacing opens the image dialog, which frames the image and fits it to this app's formats and size before it is uploaded, or reuses one already in the account.
  */
 export const ImageFieldControl = ({
   control,
+  collection,
   field,
   rule,
   inherited,
   canInherit,
   session,
+  choices,
   localImage,
   onUpload,
+  onReuse,
   uploading,
 }: Props & {
   readonly session: Session;
+  /** Images already in the account that could be used here. */
+  readonly choices: readonly Choice[];
   /** A just-chosen file, shown from the file itself. */
   readonly localImage?: string;
-  readonly onUpload: (file: File) => Promise<Blob | undefined>;
+  readonly onUpload: (file: globalThis.Blob) => Promise<Blob | undefined>;
+  /** An image already in the account was chosen, so any just-uploaded preview no longer applies. */
+  readonly onReuse: () => void;
   readonly uploading: boolean;
-}) => (
-  <Controller
-    control={control}
-    name={`fields.${field}`}
-    render={({ field: { value, onChange }, fieldState }) => {
-      const current = value ?? { mode: "inherit", text: "" };
-      const blob =
-        current.mode === "set"
-          ? current.image
-          : current.mode === "inherit" && typeof inherited.value === "object"
-            ? inherited.value
-            : undefined;
-      const src =
-        current.mode === "set" && localImage
-          ? localImage
-          : blob && blobUrl(session.pds, session.did, blob);
-      const shape = field === "banner" ? "h-16 w-40 rounded-md" : "h-16 w-16 rounded-full";
-      // Offer what this app takes, narrowed to what a browser can pick from.
-      const accept = rule.accept?.filter((type) => !type.endsWith("/*")) ?? [...IMAGE_TYPES];
+}) => {
+  const [choosing, setChoosing] = useState(false);
+  const kind = field === "banner" ? BANNER : AVATAR;
 
-      return (
-        <div className="flex flex-col gap-2">
-          <Header
-            field={field}
-            value={current}
-            onChange={onChange}
-            rule={rule}
-            inherited={inherited}
-            canInherit={canInherit}
-          />
-          <div className="flex items-center gap-3">
-            <div className={`${shape} shrink-0 overflow-hidden bg-neutral-200`}>
-              {src && current.mode !== "hide" && (
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              )}
-            </div>
-            <FileTrigger
-              acceptedFileTypes={accept.length > 0 ? accept : ["image/*"]}
-              onSelect={async (files) => {
-                const file = files?.[0];
-                const image = file && (await onUpload(file));
-                if (image) onChange({ mode: "set", text: "", image });
-              }}
-            >
+  return (
+    <Controller
+      control={control}
+      name={`fields.${field}`}
+      render={({ field: { value, onChange }, fieldState }) => {
+        const current = value ?? { mode: "inherit", text: "" };
+        const blob =
+          current.mode === "set"
+            ? current.image
+            : current.mode === "inherit" && typeof inherited.value === "object"
+              ? inherited.value
+              : undefined;
+        const src =
+          current.mode === "set" && localImage
+            ? localImage
+            : blob && blobUrl(session.pds, session.did, blob);
+        const shape = field === "banner" ? "h-16 w-48 rounded-md" : "h-16 w-16 rounded-full";
+
+        const picked = async (choice: Picked) => {
+          setChoosing(false);
+          if (choice.kind === "existing") {
+            onReuse();
+            onChange({ mode: "set", text: "", image: choice.image });
+            return;
+          }
+          const image = await onUpload(choice.file);
+          if (image) onChange({ mode: "set", text: "", image });
+        };
+
+        return (
+          <div className="flex flex-col gap-2">
+            <Header
+              collection={collection}
+              field={field}
+              value={current}
+              onChange={onChange}
+              rule={rule}
+              inherited={inherited}
+              canInherit={canInherit}
+            />
+            <div className="flex items-center gap-3">
+              <div className={`${shape} shrink-0 overflow-hidden bg-neutral-200`}>
+                {src && current.mode !== "hide" && (
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                )}
+              </div>
               <Button
                 isDisabled={uploading}
+                onPress={() => setChoosing(true)}
                 className="rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:opacity-60"
               >
                 {uploading
@@ -227,17 +245,26 @@ export const ImageFieldControl = ({
                     ? `Replace ${FIELD_LABEL[field].toLowerCase()}`
                     : `Choose ${field === "avatar" ? "an avatar" : "a banner"}`}
               </Button>
-            </FileTrigger>
-            {current.mode === "set" && !canInherit && !rule.required && (
-              <Button className={ACTION} onPress={() => onChange({ mode: "inherit", text: "" })}>
-                Remove
-              </Button>
+              {current.mode === "set" && !canInherit && !rule.required && (
+                <Button className={ACTION} onPress={() => onChange({ mode: "inherit", text: "" })}>
+                  Remove
+                </Button>
+              )}
+            </div>
+            {fieldState.error && <p className="text-xs text-red-700">{fieldState.error.message}</p>}
+            {choosing && (
+              <ImageDialog
+                session={session}
+                kind={kind}
+                rule={rule}
+                choices={choices}
+                onPicked={(choice) => void picked(choice)}
+                onClose={() => setChoosing(false)}
+              />
             )}
           </div>
-          <p className="text-xs text-neutral-600">This app takes {describeImageRule(rule)}.</p>
-          {fieldState.error && <p className="text-xs text-red-700">{fieldState.error.message}</p>}
-        </div>
-      );
-    }}
-  />
-);
+        );
+      }}
+    />
+  );
+};

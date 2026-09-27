@@ -10,6 +10,7 @@ import { canWrite } from "../scope";
 import { deleteBase, saveProfile, uploadImage, type Profiles } from "./api";
 import { nameOf } from "./collections";
 import { ImageFieldControl, TextFieldControl } from "./FieldControls";
+import { imageChoices } from "./image/choices";
 import {
   basesFor,
   formSchemaFor,
@@ -76,7 +77,7 @@ export const ProfileEditor = ({
     },
   });
   const upload = useMutation({
-    mutationFn: async ({ field, file }: { field: "avatar" | "banner"; file: File }) => {
+    mutationFn: async ({ field, file }: { field: "avatar" | "banner"; file: globalThis.Blob }) => {
       const rule = shape.fields[field];
       if (!rule) return undefined;
       const blob = await uploadImage(session, file, rule);
@@ -149,6 +150,7 @@ export const ProfileEditor = ({
           if (!rule) return null;
           const props = {
             control,
+            collection,
             field,
             rule,
             inherited: { value: inherited.fields[field], source: inherited.sources[field] },
@@ -166,7 +168,11 @@ export const ProfileEditor = ({
               key={field}
               {...props}
               session={session}
+              choices={imageChoices(profiles, field as "avatar" | "banner")}
               localImage={localImages[field as "avatar" | "banner"]}
+              onReuse={() =>
+                setLocalImages(({ [field as "avatar" | "banner"]: _dropped, ...rest }) => rest)
+              }
               uploading={upload.isPending && upload.variables.field === field}
               onUpload={(file) =>
                 upload

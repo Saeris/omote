@@ -87,7 +87,11 @@ export const describeImageRule = (rule: FieldRule): string => {
 /**
  * Upload an image to the account's PDS, for one record. Checked against that record's own lexicon first, so an image the app would refuse is refused here, with a reason.
  */
-export const uploadImage = async (session: Session, file: File, rule: FieldRule): Promise<Blob> => {
+export const uploadImage = async (
+  session: Session,
+  file: globalThis.Blob,
+  rule: FieldRule,
+): Promise<Blob> => {
   if (!accepts(rule, file.type) || (rule.maxSize !== undefined && file.size > rule.maxSize)) {
     throw new Error(`This app takes ${describeImageRule(rule)}.`);
   }

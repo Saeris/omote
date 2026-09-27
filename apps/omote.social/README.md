@@ -14,6 +14,7 @@ Two things on one Cloudflare Worker, with no storage and no secrets:
   - **Sign-in asks for two things:** writing the shared base (`social.omote.actor.profile`), and uploading images.
   - **Each app's profile is asked for separately**, the first time you edit it, so nobody grants write access to apps they don't use. bsky.social only grants collections the client metadata names, so the ones omote can ask for are listed in [`src/scope.ts`](./src/scope.ts); any other app's profile is read-only.
   - **Edits follow the app's own lexicon**, resolved from the network: its fields, limits, image formats and required fields. omote never writes `null` or `extends` into a record whose lexicon doesn't declare them, and keeps every field it doesn't edit.
+  - **Images are framed, then fitted.** Any image the browser can open is cropped in a React Aria cropper (drag or arrow keys to move, slider, wheel, pinch or +/− to zoom, quarter turns), then resized and encoded with the browser's own canvas until it fits the app's formats and size. An image already in the account, or an untouched upload that already fits, is used as it is, so animation survives.
 - **The homepage**, at `/`: a placeholder for now.
 - **The resolve endpoint**: `GET /xrpc/social.omote.getProfile?actor=…&collection=…`, answered by [`@omote-social/profiles`][profiles] on every request. It is open to any origin, and a convenience for prototyping; apps should resolve profiles with the library in production.
 
