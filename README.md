@@ -54,11 +54,11 @@ const profile = await getProfile("alice.example.com", "social.grain.actor.profil
 
 ## 📦 Packages
 
-| Package                                              | Description                                                                                                                                  |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@omote-social/lexicon`](./packages/lexicon)        | The `social.omote.*` lexicons and their [Valibot][valibot] schemas                                                                           |
-| [`@omote-social/profiles`](./packages/profiles)      | `getProfile(actor, collection)`: resolve how an account appears in an app, in browsers, Node and Workers                                     |
-| [`omote.social`](./apps/omote.social) _(not on npm)_ | The editor: every profile in your account, where each field comes from, and your shared base. Plus a `social.omote.getProfile` XRPC endpoint |
+| Package                                              | Description                                                                                                                                                                                                 |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@omote-social/lexicon`](./packages/lexicon)        | The `social.omote.*` lexicons and their [Valibot][valibot] schemas                                                                                                                                          |
+| [`@omote-social/profiles`](./packages/profiles)      | `getProfile(actor, collection)`: resolve how an account appears in an app, in browsers, Node and Workers                                                                                                    |
+| [`omote.social`](./apps/omote.social) _(not on npm)_ | The site: homepage, [developer docs](https://omote.social/docs/), and the editor, which shows every profile in your account and where each field comes from. Plus a `social.omote.getProfile` XRPC endpoint |
 
 ## 🤝 Contributing
 
