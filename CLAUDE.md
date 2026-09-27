@@ -107,9 +107,14 @@ Default to surfacing uncertainty, not hiding it.
   `yarn preview` adds the Worker. Sign-in redirects to 127.0.0.1, never
   `localhost`: bsky.social refuses a `localhost` redirect (RFC 8252) while Cirrus
   accepts one, so testing only against Cirrus hides the bug.
-- **Site routes:** `/` is the (future) marketing page, `/docs/` the developer
-  docs (Starlight's conventions if it grows past one page), `/editor/` the
-  signed-in editor. Marketing code reference: tailark.com.
+- **Site routes:** `/` is the marketing page (structured after keytrace.dev;
+  tailark.com is the code reference for the design pass), `/docs/` the
+  developer docs (Starlight, inside the same Astro site; pages in
+  `src/content/docs/docs/`), `/editor/` the signed-in editor.
+- **Docs writing style:** Astro's guide
+  (contribute.docs.astro.build/guides/writing-style/): neutral and factual,
+  imperative, no "we/us/let's", explain before showing code, short headings
+  without end punctuation.
 - **Editing other apps' records:** permission per collection on first edit
   (`src/scope.ts` lists what the client metadata declares), and every write
   follows that app's resolved lexicon (`src/editor/shape.ts`).

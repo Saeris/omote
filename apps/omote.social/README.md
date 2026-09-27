@@ -2,27 +2,28 @@
 
 # omote.social
 
-The Omote profile editor, and a `social.omote.getProfile` XRPC endpoint
+The Omote site: homepage, developer docs, profile editor, and a `social.omote.getProfile` XRPC endpoint
 
 </div>
 
 ---
 
-Two things on one Cloudflare Worker, with no storage and no secrets:
+One Cloudflare Worker, with no storage and no secrets:
 
+- **The homepage**, at `/`: what Omote is, in the format of keytrace.dev's homepage.
+- **The developer docs**, at `/docs/`: [Starlight][starlight], inside this same site. Pages are Markdown in [`src/content/docs/docs/`](./src/content/docs/docs/); the extra `docs/` level is what serves them under `/docs/`. They follow Astro's [writing style guide][astro-style].
 - **The editor**, at `/editor/`: static [Astro][astro] pages, with React only for the forms. Sign-in is a public OAuth client that runs entirely in the browser.
   - **Sign-in asks for two things:** writing the shared base (`social.omote.actor.profile`), and uploading images.
   - **Each app's profile is asked for separately**, the first time you edit it, so nobody grants write access to apps they don't use. bsky.social only grants collections the client metadata names, so the ones omote can ask for are listed in [`src/scope.ts`](./src/scope.ts); any other app's profile is read-only.
   - **Edits follow the app's own lexicon**, resolved from the network: its fields, limits, image formats and required fields. omote never writes `null` or `extends` into a record whose lexicon doesn't declare them, and keeps every field it doesn't edit.
   - **Images are framed, then fitted.** Any image the browser can open is cropped in a React Aria cropper (drag or arrow keys to move, slider, wheel, pinch or +/− to zoom, quarter turns), then resized and encoded with the browser's own canvas until it fits the app's formats and size. An image already in the account, or an untouched upload that already fits, is used as it is, so animation survives.
-- **The homepage**, at `/`: a placeholder for now.
 - **The resolve endpoint**: `GET /xrpc/social.omote.getProfile?actor=…&collection=…`, answered by [`@omote-social/profiles`][profiles] on every request. It is open to any origin, and a convenience for prototyping; apps should resolve profiles with the library in production.
 
 ## 🔧 Local Development
 
 ```bash
-yarn dev        # the site with hot reload, at http://127.0.0.1:4321/editor/
-yarn preview    # the built site and the Worker together, at http://127.0.0.1:8787/editor/
+yarn dev        # the site with hot reload, at http://127.0.0.1:4321/
+yarn preview    # the built site and the Worker together, at http://127.0.0.1:8787/
 ```
 
 Sign-in works on this machine with no setup: ATProto's OAuth has a development exception for it, so any account can sign in to a local copy. The exception's client id is `http://localhost`, but bsky.social only redirects back to `127.0.0.1`, so both servers listen there and a page opened on `localhost` moves itself across.
@@ -56,5 +57,7 @@ Until the domain is live, the Worker is served on its `workers.dev` address. To 
 Deploy this app to your own Cloudflare account the same way. Set `PUBLIC_SITE_ORIGIN` at build time to where it will be served, since the OAuth client metadata is generated from it.
 
 [astro]: https://astro.build
+[starlight]: https://starlight.astro.build
+[astro-style]: https://contribute.docs.astro.build/guides/writing-style/
 [profiles]: ../../packages/profiles
 [workers-builds]: https://developers.cloudflare.com/workers/ci-cd/builds/

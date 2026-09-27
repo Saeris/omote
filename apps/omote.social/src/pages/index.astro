@@ -1,26 +1,162 @@
 ---
+import { Code } from "astro:components";
 import Base from "../layouts/Base.astro";
 import { EDITOR_PATH } from "../paths";
+
+/**
+ * The homepage. Its structure follows keytrace.dev's: what it is, how it works, what it offers developers, and a closing call to action. The look is a placeholder until the design pass.
+ */
+
+const steps = [
+  {
+    title: "Sign in with your handle",
+    body: "Any ATProto account works. You confirm on your own server, and omote stores nothing: your profiles stay in your account.",
+  },
+  {
+    title: "See where you appear",
+    body: "Every app's profile of you, side by side, and for each field the profile it comes from.",
+  },
+  {
+    title: "Change it here, or everywhere",
+    body: "Edit one app's profile within that app's own rules, or your shared profile, which every app that builds on it follows.",
+  },
+];
+
+const features = [
+  {
+    title: "One field in your lexicon",
+    body: "Add extends to your profile record, and it builds on the profiles a person already has. Records take part by shape, so your lexicon never depends on ours.",
+  },
+  {
+    title: "Resolves like tsconfig",
+    body: "Later bases win, the record's own fields win over all, and null hides what the bases say. The rules are written down, so every app lands on the same answer.",
+  },
+  {
+    title: "No AppView in the path",
+    body: "@omote-social/profiles reads straight from the account's own server, in browsers, Node and Cloudflare Workers.",
+  },
+];
+
+const record = `{
+  "$type": "social.grain.actor.profile",
+  "extends": ["app.bsky.actor.profile", "social.omote.actor.profile"],
+  "displayName": "Alice (photos)",
+  "description": null
+}`;
+
+const usage = `import { getProfile } from "@omote-social/profiles";
+
+const profile = await getProfile("alice.example.com", "social.grain.actor.profile");
+profile.displayName; // "Alice (photos)": set by Grain's own record
+profile.sources.avatar; // { collection: "app.bsky.actor.profile" }`;
+
+const primary = "rounded-md bg-neutral-900 px-4 py-2 font-medium text-white";
+const secondary = "rounded-md border border-neutral-300 bg-white px-4 py-2 font-medium";
 ---
 
-<!-- A placeholder until the marketing page is built. -->
-<Base title="omote: how you appear in each app">
-  <header class="flex flex-col gap-4">
-    <h1 class="text-3xl font-semibold tracking-tight">omote</h1>
-    <p class="max-w-2xl text-neutral-700">
-      Your ATProto account is one identity, everywhere. How you present it doesn't have to be. See
-      where each app's profile of you comes from, and keep a shared profile that apps can build on.
+<Base title="omote: a face for every app">
+  <section aria-labelledby="hero" class="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-20">
+    <h1 id="hero" class="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
+      One account. A face for every app.
+    </h1>
+    <p class="max-w-2xl text-lg text-neutral-700">
+      Your ATProto account signs you in everywhere, but every app keeps its own profile of you.
+      Omote shows you where each one comes from, and lets you change a profile in one app, or in
+      every app at once.
     </p>
     <div class="flex flex-wrap gap-3">
-      <a href={EDITOR_PATH} class="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white">
-        Open the editor
-      </a>
-      <a
-        href="https://github.com/Saeris/omote/blob/main/docs/spec.md"
-        class="rounded-md border border-neutral-300 px-4 py-2 font-medium"
-      >
-        Read the spec
-      </a>
+      <a href={EDITOR_PATH} class={primary}>Open the editor →</a>
+      <a href="/docs/" class={secondary}>Read the docs →</a>
     </div>
-  </header>
+  </section>
+
+  <section aria-labelledby="problem" class="border-y border-neutral-200 bg-white">
+    <div class="mx-auto grid max-w-5xl gap-6 px-6 py-16 md:grid-cols-2">
+      <div class="flex flex-col gap-3">
+        <h2 id="problem" class="text-2xl font-semibold tracking-tight">
+          Which profile does each app show?
+        </h2>
+        <p class="text-neutral-700">
+          Change your name on Bluesky, and does it change on Grain? Nothing tells you. Grain's own
+          account holds nine profile records, one per app, with three different display names
+          between them.
+        </p>
+      </div>
+      <p class="self-end text-neutral-700">
+        Omote gives every app a way to say where its profile comes from, and gives you one place
+        to see it. In Noh theatre, <i>omote</i> (表) are the masks a performer changes between roles
+        while the audience still knows who is underneath.
+      </p>
+    </div>
+  </section>
+
+  <section aria-labelledby="how" class="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-16">
+    <div class="flex flex-col gap-2">
+      <h2 id="how" class="text-2xl font-semibold tracking-tight">How it works</h2>
+      <p class="text-neutral-700">Three steps, in your own account.</p>
+    </div>
+    <ol class="grid gap-6 md:grid-cols-3">
+      {
+        steps.map((step, index) => (
+          <li class="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-5">
+            <span aria-hidden class="text-sm font-semibold text-neutral-500">
+              {index + 1}
+            </span>
+            <h3 class="font-semibold">{step.title}</h3>
+            <p class="text-sm text-neutral-700">{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section aria-labelledby="developers" class="border-y border-neutral-200 bg-white">
+    <div class="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-16">
+      <div class="flex flex-col gap-2">
+        <h2 id="developers" class="text-2xl font-semibold tracking-tight">
+          For ATProto developers
+        </h2>
+        <p class="text-neutral-700">Your lexicon. One more field. The same answer in every app.</p>
+      </div>
+      <ul class="grid gap-6 md:grid-cols-3">
+        {
+          features.map((feature) => (
+            <li class="flex flex-col gap-2">
+              <h3 class="font-semibold">{feature.title}</h3>
+              <p class="text-sm text-neutral-700">{feature.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="grid gap-4 md:grid-cols-2">
+        <figure class="flex min-w-0 flex-col gap-2">
+          <figcaption class="text-sm font-medium">An app's own profile record</figcaption>
+          <div class="overflow-x-auto rounded-lg text-sm [&_pre]:p-4">
+            <Code code={record} lang="json" theme="github-dark" />
+          </div>
+        </figure>
+        <figure class="flex min-w-0 flex-col gap-2">
+          <figcaption class="text-sm font-medium">Resolved in that app</figcaption>
+          <div class="overflow-x-auto rounded-lg text-sm [&_pre]:p-4">
+            <Code code={usage} lang="ts" theme="github-dark" />
+          </div>
+        </figure>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="/docs/guides/adopt/" class={primary}>Adopt Omote →</a>
+        <a href="https://github.com/Saeris/omote" class={secondary}>View the source →</a>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="closing" class="mx-auto flex max-w-5xl flex-col items-start gap-4 px-6 py-20">
+    <h2 id="closing" class="text-3xl font-semibold tracking-tight">Choose the face you show.</h2>
+    <p class="text-neutral-700">
+      One account, as many profiles as you use, and never a question of which one an app shows.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <a href={EDITOR_PATH} class={primary}>Open the editor →</a>
+      <a href="/docs/concepts/" class={secondary}>How profiles extend →</a>
+    </div>
+  </section>
 </Base>

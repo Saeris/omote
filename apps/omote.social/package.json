@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@astrojs/react": "catalog:",
+    "@astrojs/starlight": "catalog:",
     "@atcute/atproto": "catalog:",
     "@atcute/client": "catalog:",
     "@atcute/identity": "catalog:",

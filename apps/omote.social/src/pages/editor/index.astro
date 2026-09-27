@@ -4,12 +4,14 @@ import Base from "../../layouts/Base.astro";
 ---
 
 <Base title="Editor · omote">
-  <header class="flex flex-col gap-3">
-    <h1 class="text-3xl font-semibold tracking-tight">omote</h1>
-    <p class="max-w-2xl text-neutral-700">
-      Your ATProto account is one identity, everywhere. How you present it doesn't have to be. See
-      where each app's profile of you comes from, and keep a shared profile that apps can build on.
-    </p>
-  </header>
-  <Editor client:only="react" />
+  <div class="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
+    <header class="flex flex-col gap-3">
+      <h1 class="text-3xl font-semibold tracking-tight">Your profiles</h1>
+      <p class="max-w-2xl text-neutral-700">
+        See where each app's profile of you comes from, and keep a shared profile that apps can
+        build on.
+      </p>
+    </header>
+    <Editor client:only="react" />
+  </div>
 </Base>

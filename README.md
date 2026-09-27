@@ -66,7 +66,7 @@ The project uses [Vite+][viteplus] as a unified toolchain (Oxlint + Oxfmt + tsdo
 
 ```bash
 yarn install         # install dependencies
-yarn dev             # run the site locally, at http://127.0.0.1:4321/editor/
+yarn dev             # run the site locally, at http://127.0.0.1:4321/
 vp check --fix       # format + lint + typecheck (with autofixes)
 vp test              # run Vitest
 yarn bumpy add       # create a bump file for your PR
