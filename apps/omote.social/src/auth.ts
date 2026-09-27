@@ -11,8 +11,10 @@ import type { ActorIdentifier, Did } from "@atcute/lexicons";
 import { isActorIdentifier, isDid } from "@atcute/lexicons/syntax";
 import {
   OAuthUserAgent,
+  TokenRefreshError,
   configureOAuth,
   createAuthorizationUrl,
+  deleteStoredSession,
   finalizeAuthorization,
   getSession,
 } from "@atcute/oauth-browser-client";
@@ -31,7 +33,7 @@ export interface Session {
   readonly signOut: () => Promise<void>;
 }
 
-const LAST_DID = "omote.lastDid";
+const LAST_SESSION = "omote.lastSession";
 
 /**
  * Running on this machine. `Base.astro` moves `localhost` to `127.0.0.1` before anything else runs, because the redirect must land there.
@@ -58,6 +60,7 @@ const clientId = (redirectUri: string): string => {
 };
 
 let configured = false;
+let currentClientId = "";
 
 const configure = (): void => {
   if (configured) {
@@ -68,8 +71,9 @@ const configure = (): void => {
   // On this machine, that page is already on 127.0.0.1 (see isLoopback), so its origin is the redirect's.
   const redirectUri = `${globalThis.location.origin}${EDITOR_PATH}`;
 
+  currentClientId = clientId(redirectUri);
   configureOAuth({
-    metadata: { client_id: clientId(redirectUri), redirect_uri: redirectUri },
+    metadata: { client_id: currentClientId, redirect_uri: redirectUri },
     identityResolver: defaultResolver(),
   });
   configured = true;
@@ -101,20 +105,55 @@ const toSession = (agent: OAuthUserAgent): Session => ({
   },
 });
 
+/**
+ * The signed-in account, and the client id its session was made for.
+ *
+ * A session only refreshes under the client id that created it. The localhost client id carries the redirect and the declared scopes, so it changes whenever either does, and a session from before then can never refresh: the server answers `invalid_grant`, which atcute reports as revoked. Knowing the client id lets a stale session be dropped at once instead of failing on the first request.
+ */
+interface Remembered {
+  readonly did: string;
+  readonly clientId: string;
+}
+
 const remember = (did: string): void => {
   try {
-    globalThis.localStorage.setItem(LAST_DID, did);
+    const remembered: Remembered = { did, clientId: currentClientId };
+    globalThis.localStorage.setItem(LAST_SESSION, JSON.stringify(remembered));
   } catch {
     // Blocked storage: the session lasts one page load instead.
   }
 };
 
+const recall = (): Remembered | undefined => {
+  try {
+    const value: unknown = JSON.parse(globalThis.localStorage.getItem(LAST_SESSION) ?? "null");
+    const { did, clientId } = (value ?? {}) as Partial<Remembered>;
+    return typeof did === "string" && typeof clientId === "string" ? { did, clientId } : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const forget = (): void => {
   try {
-    globalThis.localStorage.removeItem(LAST_DID);
+    globalThis.localStorage.removeItem(LAST_SESSION);
   } catch {
     // Nothing to forget.
   }
+};
+
+/** The account whose session an error says is over, if it does. Only signing in again helps then; retrying cannot. */
+export const endedSession = (error: unknown): Did | undefined => {
+  if (error instanceof TokenRefreshError) return error.sub;
+  return error instanceof Error && error.cause !== undefined
+    ? endedSession(error.cause)
+    : undefined;
+};
+
+/** Drop an ended session, so the next page load starts at sign-in. */
+export const endSession = (did: Did): void => {
+  forget();
+  deleteStoredSession(did);
 };
 
 /** Send the browser to the account's own server to sign in. Navigates away. */
@@ -177,22 +216,21 @@ export const currentSession = async (): Promise<Session | undefined> => {
     return toSession(new OAuthUserAgent(session));
   }
 
-  let did: string | null = null;
-  try {
-    did = globalThis.localStorage.getItem(LAST_DID);
-  } catch {
+  const remembered = recall();
+  if (!remembered || !isDid(remembered.did)) {
     return undefined;
   }
 
-  if (!did || !isDid(did)) {
+  if (remembered.clientId !== currentClientId) {
+    endSession(remembered.did);
     return undefined;
   }
 
   try {
     // Stale is fine: clientFor refreshes before the first request.
-    return toSession(new OAuthUserAgent(await getSession(did, { allowStale: true })));
+    return toSession(new OAuthUserAgent(await getSession(remembered.did, { allowStale: true })));
   } catch {
-    forget();
+    endSession(remembered.did);
     return undefined;
   }
 };

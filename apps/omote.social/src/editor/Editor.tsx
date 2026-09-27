@@ -1,9 +1,22 @@
 import { NSID_BASE_PROFILE } from "@omote-social/lexicon";
 import { blobUrl, defaultResolver, resolveProfile } from "@omote-social/profiles";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Button, Form } from "react-aria-components";
-import { beginSignIn, currentSession, takeReturnTo, type Session } from "../auth";
+import {
+  beginSignIn,
+  currentSession,
+  endSession,
+  endedSession,
+  takeReturnTo,
+  type Session,
+} from "../auth";
 import { listProfiles } from "./api";
 import { byPrecedence, nameOf } from "./collections";
 import { HandleField } from "./HandleField";
@@ -12,7 +25,26 @@ import { Overview } from "./Overview";
 import { buildOverview } from "./overview-model";
 import { ProfilePage } from "./ProfilePage";
 
-const queryClient = new QueryClient();
+const ENDED = "Your session ended. Sign in again to carry on.";
+
+/**
+ * A session that has ended stays ended: retrying only makes the page wait. Any read or write that finds it so drops the session and returns to sign-in, saying why.
+ */
+const onError = (error: unknown) => {
+  const did = endedSession(error);
+  if (!did) return;
+  endSession(did);
+  queryClient.setQueryData(["ended"], true);
+  queryClient.setQueryData(["session"], null);
+};
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError }),
+  mutationCache: new MutationCache({ onError }),
+  defaultOptions: {
+    queries: { retry: (failures, error) => !endedSession(error) && failures < 3 },
+  },
+});
 
 /** The editor, mounted once on the page. */
 export const Editor = () => (
@@ -27,10 +59,12 @@ const SessionGate = () => {
     queryFn: async () => (await currentSession()) ?? null,
     staleTime: Infinity,
   });
+  const ended = useQuery({ queryKey: ["ended"], queryFn: () => false, staleTime: Infinity });
 
   if (session.isPending) return <p className="text-neutral-600">Loading…</p>;
   if (session.error) return <SignIn problem={session.error.message} />;
-  return session.data ? <Workspace session={session.data} /> : <SignIn />;
+  if (session.data) return <Workspace session={session.data} />;
+  return <SignIn problem={ended.data ? ENDED : undefined} />;
 };
 
 const SignIn = ({ problem }: { readonly problem?: string }) => {
